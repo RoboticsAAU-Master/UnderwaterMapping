@@ -14,8 +14,8 @@
         # Extract features using e.g. SIFT or SURF (For now, later we can use SVO)
         # Compute disparity from stereo cameras to find depth
             # (Image rectification)
-            # Correspondance search along epipolar line
-        # Obtain the feature world coordinates  (Triangulate)
+            # Correspondence search along epipolar line
+        # Obtain the feature world coordinates (Triangulate)
         # Compute relative motion of camera using PnP (3D-2D)
             # Determine feature correspondences
             # Triangulate to determine relative motion
