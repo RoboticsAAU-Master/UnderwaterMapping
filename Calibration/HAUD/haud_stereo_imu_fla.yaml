@@ -1,0 +1,75 @@
+cameras:
+- camera:
+    distortion:
+      parameters:
+        cols: 1
+        rows: 4
+        data: [0.2420, 0.2928, 0.0065, -0.00063]
+      type: radial-tangential
+    image_height: 376
+    image_width: 672
+    intrinsics:
+      cols: 1
+      rows: 4
+      data: [356.9395, 356.9283, 336.8249, 197.6402]
+      label: /sync/cam0/image_raw
+    line-delay-nanoseconds: 0
+    type: pinhole
+  T_B_C:
+    cols: 4
+    rows: 4
+    data: [1.0774367281234598e-02, 1.3722450259400609e-02,9.9984779210066166e-01, 2.2191769991406866e-03,
+          -9.9988318376806129e-01, 1.0988668661093715e-02,1.0623934247843136e-02, 1.5661063006466382e-02,
+          -1.0841209689645359e-02, -9.9984545981863393e-01,1.3839243206554386e-02, -6.6675934139888496e-03,
+          0.0, 0.0, 0.0, 1.0]
+  serial_no: 0
+  calib_date: 0
+  description: 'left cam'
+- camera:
+    distortion:
+      parameters:
+        cols: 1
+        rows: 4
+        data: [0.2462, 0.2573, 0.000936, 0.009]
+      type: radial-tangential
+    image_height: 376
+    image_width: 672
+    intrinsics:
+      cols: 1
+      rows: 4
+      data: [355.8177, 355.3896, 339.3865, 193.1286]
+    label: /sync/cam1/image_raw
+    line-delay-nanoseconds: 0
+    type: pinhole
+  T_B_C:
+    cols: 4
+    rows: 4
+    data: [-9.9894564879610126e-03, 1.4976113161034255e-02,9.9983795026677336e-01, 4.2034492391153176e-03,
+          -9.9988619241567300e-01, 1.1155135001200911e-02,-1.0157026119527124e-02, -9.6192631421175054e-02,
+          -1.1305440087095275e-02, -9.9982562429540311e-01,1.4862975030061065e-02, -6.7563136525340562e-03,
+          0.0, 0.0, 0.0, 1.0]
+  serial_no: 0
+  calib_date: 0
+  description: 'right cam'
+label: fla1_forward_stereo
+
+imu_params:
+  delay_imu_cam: 0.0
+  max_imu_delta_t: 0.01
+  acc_max: 176.0
+  omega_max: 7.8
+  sigma_omega_c: 0.00006831
+  sigma_acc_c: 0.00082964
+  sigma_omega_bias_c: 0.00000005
+  sigma_acc_bias_c: 0.00005379
+  sigma_integration: 0.0
+  g: 9.81007
+  imu_rate: 400.0
+
+imu_initialization:
+  velocity: [0, 0, 0]
+  omega_bias: [0, 0, 0]
+  acc_bias: [0, 0, 0]
+  velocity_sigma: 0.5
+  omega_bias_sigma: 0.005
+  acc_bias_sigma: 0.05
