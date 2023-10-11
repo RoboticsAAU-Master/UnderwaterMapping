@@ -2,6 +2,7 @@ import numpy as np
 import cv2 as cv
 import glob
 import matplotlib.pyplot as plt
+from tqdm import tqdm
 
 
 def calibrate_stereo(path_to_calib_images : str, board_size : tuple, display : bool = False) -> dict:
@@ -10,7 +11,7 @@ def calibrate_stereo(path_to_calib_images : str, board_size : tuple, display : b
     pts_obj[:,:2] = np.mgrid[0:board_size[0],0:board_size[1]].T.reshape(-1,2)
 
     # Scale the object points to correspond with the actual size of the squares
-    square_size = 20.0 # i.e. 20 mm
+    square_size = 0.0365 # i.e. 20 mm
     pts_obj *= square_size
 
     # Arrays to store object points and image points from all the images.
@@ -21,7 +22,7 @@ def calibrate_stereo(path_to_calib_images : str, board_size : tuple, display : b
     image_names = []
 
     # Loop through all the images
-    for fname in images:
+    for fname in tqdm(images):
         # Loop image and convert to grayscale
         left_img = cv.imread(fname)
         left_gray = cv.cvtColor(left_img, cv.COLOR_BGR2GRAY)

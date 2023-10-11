@@ -1,5 +1,5 @@
 # Standard imports
-
+import glob
 
 # Own imports
 from Utilities.Calibration import calib
@@ -12,8 +12,8 @@ if __name__ == "__main__":
     cap, _ = load.load_monocular("Datasets/Kridtgraven/Normal", imu=False)
 
     # Calibrate stereo cameras
-    #calib_params = calib.calibrate_stereo("Calibration/CheckerImages", board_size=(9,6))
-    
+    calib_params = calib.calibrate_stereo("Utilities/Calibration/CheckerImages", board_size=(9,6), display=False)
+        
     # Initialise map object
     mapper = Mapper()
     pose_estimator = PoseEstimator()
