@@ -45,12 +45,12 @@ GPMF_ERR readMP4File(char* filename) {
 		// Open CSV files for data saving
 		FILE *csvFileAccel = fopen("outputAccl.csv", "w");
 		if (csvFileAccel == NULL) {
-			printf("error: could not open outputAccel.csv");
+			printf("error: could not open outputAccl.csv");
 			return 1;  // Exit the program with an error code
 		}
 		FILE *csvFileGyro = fopen("outputGyro.csv", "w");
 		if (csvFileGyro == NULL) {
-			printf("error: could not open outputAccel.csv");
+			printf("error: could not open outputGyro.csv");
 			return 1;  // Exit the program with an error code
 		}
 		// Print out video framerate
