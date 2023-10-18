@@ -8,10 +8,10 @@
 #include "gpmf-parser/GPMF_utils.h"
 
 #define SHOW_GPMF_STRUCTURE			0
-#define	SHOW_THIS_FOUR_CC			"GYRO"//"ACCL" or "GYRO"
+#define	SHOW_THIS_FOUR_CC			"GYRO" //"ACCL" or "GYRO"
 
 extern void PrintGPMF(GPMF_stream* ms);
-GPMF_ERR readMP4File(char* filename);
+GPMF_ERR readMP4File(char* filename, char* output_folder);
 
 uint32_t show_gpmf_structure = SHOW_GPMF_STRUCTURE;
 uint32_t show_this_four_cc = STR2FOURCC(SHOW_THIS_FOUR_CC);
@@ -23,20 +23,20 @@ FILE *csvFileGyro;
 int main(int argc, char* argv[]) {
 	GPMF_ERR ret = GPMF_OK;
 	
-	// Check if user has specified file path, otherwise use hard-coded path
-	if (argc > 1) {
-		ret = readMP4File(argv[1]);
+	// Input: file_path  output_folder
+	if (argc > 1) { // Running through terminal
+		ret = readMP4File(argv[1], argv[2]);
 	}
 	else {
-		char* path = "../../C3_GX040003.MP4";
-		ret = readMP4File(path);
+		ret = readMP4File("../../C3_GX040003.MP4", 
+						  "Output/C3_GX040003/Metadata");
 	}
 
 	printf("\n");
 	return 0;
 }
 
-GPMF_ERR readMP4File(char* filename) {
+GPMF_ERR readMP4File(char* filename, char* output_folder) {
 	GPMF_ERR ret = GPMF_OK;
 	GPMF_stream metadata_stream = { 0 }, * ms = &metadata_stream;
 	double metadatalength;
@@ -53,21 +53,36 @@ GPMF_ERR readMP4File(char* filename) {
 
     metadatalength = GetDuration(mp4handle);
     if (metadatalength > 0.0) {
+		char* output_path;
+		output_path = malloc(128); // Make space for the new string (should check the return value ...)
+		if (output_path == NULL) { // Memory allocation failed; handle the error
+			fprintf(stderr, "Memory allocation failed\n");
+			exit(1);  // Exit the program or handle the error appropriately
+		}
+		strcpy(output_path, output_folder); // Copy name into the new var
+		// If output folder is specified add "/" in between
+		if ((output_path != NULL) && (output_path[0] != '\0')) 
+			strcat(output_path, "/");
+
 		// Open CSV files for data saving
 		if (SHOW_THIS_FOUR_CC == "ACCL") {
-			csvFileAccel = fopen("outputAccl.csv", "w");
+			strcat(output_path, "outputAccl.csv"); // Add the extension
+			csvFileAccel = fopen(output_path, "w");
 			if (csvFileAccel == NULL) {
 				printf("error: could not open outputAccl.csv");
 				return 1;  // Exit the program with an error code
 			}
 		}
 		if (SHOW_THIS_FOUR_CC == "GYRO") {
-			csvFileGyro = fopen("outputGyro.csv", "w");
+			strcat(output_path, "outputGyro.csv"); // Add the extension
+			csvFileGyro = fopen(output_path, "w");
 			if (csvFileGyro == NULL) {
 				printf("error: could not open outputGyro.csv");
 				return 1;  // Exit the program with an error code
 			}
 		}
+		free(output_path);
+
 		// Print out video framerate
         uint32_t fr_num, fr_dem;
 		uint32_t frames = GetVideoFrameRateAndCount(mp4handle, &fr_num, &fr_dem);
