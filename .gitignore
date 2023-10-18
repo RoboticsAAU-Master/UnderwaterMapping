@@ -1,6 +1,4 @@
 # Folders to ignore
-datasets/*
-!datasets/README.md
 .idea/
 
 # Byte-compiled / optimized / DLL files
