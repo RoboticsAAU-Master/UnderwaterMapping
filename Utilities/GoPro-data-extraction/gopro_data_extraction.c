@@ -8,7 +8,7 @@
 #include "gpmf-parser/GPMF_utils.h"
 
 #define SHOW_GPMF_STRUCTURE			0
-#define	SHOW_THIS_FOUR_CC			"ACCL"//"ACCL" or "GYRO"
+#define	SHOW_THIS_FOUR_CC			"GYRO"//"ACCL" or "GYRO"
 
 extern void PrintGPMF(GPMF_stream* ms);
 GPMF_ERR readMP4File(char* filename);
@@ -28,7 +28,7 @@ int main(int argc, char* argv[]) {
 		ret = readMP4File(argv[1]);
 	}
 	else {
-		char* path = "/home/ros1/Desktop/C1_GX040003.MP4";
+		char* path = "../../C3_GX040003.MP4";
 		ret = readMP4File(path);
 	}
 
