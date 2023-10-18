@@ -6,13 +6,21 @@ roslib.load_manifest('sensor_msgs')
 from sensor_msgs.msg import Image, Imu
 from cv_bridge import CvBridge
 import pandas as pd
+from tqdm import tqdm
 
 from PIL import ImageFile
 
 import cv2
 
-CAM_SAMPLE_RATE = 60.0 # Hz
-IMU_SAMPLE_RATE = 200.0 # Hz
+CAM_SAMPLE_RATE = 20.0 # Hz
+IMU_SAMPLE_RATE = 197.720721 # Hz
+
+STANDARD_TO_TOPIC = {
+    'euroc_mono' : ['/cam0/image_raw','/imu0'],
+    'euroc_stereo' : ['/cam0/image_raw','/cam1/image_raw','/imu0'],
+    'fla_mono' : ['/sync/cam0/image_raw','/sync/imu/imu'],
+    'fla_stereo' : ['/sync/cam0/image_raw','/sync/cam1/image_raw','/sync/imu/imu']
+}
 
 def GetFilesFromDir(dir):
     '''Generates a list of files from the directory'''
@@ -32,17 +40,17 @@ def GetFilesFromDir(dir):
     return all, left_files, right_files
 
 
-def CreateStereoBag(left_imgs, right_imgs, bagname):
+def CreateStereoBag(left_imgs, right_imgs, bagname, standard):
     '''Creates a bag file containing stereo image pairs'''
     bag =rosbag.Bag(bagname, 'w')
 
     timer = 0
 
     try:
-        for i in range(len(left_imgs)):
-            print("Adding %s" % left_imgs[i])
-            img_left = cv2.imread(left_imgs[i])
-            img_right = cv2.imread(right_imgs[i])
+        for i in tqdm(range(len(left_imgs))):
+            #print("Adding %s" % left_imgs[i])
+            img_left = cv2.imread(left_imgs[i], cv2.IMREAD_GRAYSCALE)
+            img_right = cv2.imread(right_imgs[i], cv2.IMREAD_GRAYSCALE)
 
             bridge = CvBridge()
 
@@ -53,43 +61,49 @@ def CreateStereoBag(left_imgs, right_imgs, bagname):
             timer += 1/CAM_SAMPLE_RATE
 
             img_msg_left = Image()
-            img_msg_left = bridge.cv2_to_imgmsg(img_left, "bgr8")
+            img_msg_left = bridge.cv2_to_imgmsg(img_left, "mono8")
             img_msg_left.header.seq = i
             img_msg_left.header.stamp = Stamp
             img_msg_left.header.frame_id = "camera/left"
 
             img_msg_right = Image()
-            img_msg_right = bridge.cv2_to_imgmsg(img_right, "bgr8")
+            img_msg_right = bridge.cv2_to_imgmsg(img_right, "mono8")
             img_msg_right.header.seq = i
             img_msg_right.header.stamp = Stamp
             img_msg_right.header.frame_id = "camera/right"
 
-            bag.write('camera/left/image_raw', img_msg_left, Stamp)
-            bag.write('camera/right/image_raw', img_msg_right, Stamp)
+            bag.write(STANDARD_TO_TOPIC[standard][0], img_msg_left, Stamp)
+            bag.write(STANDARD_TO_TOPIC[standard][1], img_msg_right, Stamp)
 
-            # Adding IMU data
     finally:
         bag.close()
 
 
-def CreateMonoBag(imgs, bagname):
+def CreateMonoBag(imgs, bagname, standard):
     '''Creates a bag file with camera images'''
     bag =rosbag.Bag(bagname, 'w')
 
+    timer = 0
+
     try:
-        for i in range(len(imgs)):
-            print("Adding %s" % imgs[i])
-            img = cv2.imread(imgs[i])
+        for i in tqdm(range(len(imgs))):
+            #print("Adding %s" % imgs[i])
+            img = cv2.imread(imgs[i], cv2.IMREAD_GRAYSCALE)
             bridge = CvBridge()
 
-            Stamp = rospy.rostime.Time.from_sec(time.time())
+            # Stamp = rospy.rostime.Time.from_sec(time.time())
+
+            # Since image acquisition frequency depends on write speed, the timestamp is synthesized
+            Stamp = rospy.Time.from_sec(timer)
+            timer += 1/CAM_SAMPLE_RATE
+
             img_msg = Image()
-            img_msg = bridge.cv2_to_imgmsg(img, "bgr8")
+            img_msg = bridge.cv2_to_imgmsg(img, "mono8")
             img_msg.header.seq = i
             img_msg.header.stamp = Stamp
             img_msg.header.frame_id = "camera"
 
-            bag.write('camera/image_raw', img_msg, Stamp)
+            bag.write(STANDARD_TO_TOPIC[standard][0], img_msg, Stamp)
     finally:
         bag.close()
 
@@ -102,16 +116,20 @@ def CreateBag(args):
         exit()
 
     if len(left_imgs) > 0 and len(right_imgs) > 0:
+        if not 'stereo' in args[3]:
+            raise Exception("Stereo data provided does not match standard") 
         # create bagfile with stereo camera image pairs
-        CreateStereoBag(left_imgs, right_imgs, args[1])
+        CreateStereoBag(left_imgs, right_imgs, args[1], args[3])
     else:
+        if not 'mono' in args[3]:
+            raise Exception("Mono data provided does not match standard") 
         # create bagfile with mono camera image stream
-        CreateMonoBag(all_imgs, args[1])
+        CreateMonoBag(all_imgs, args[1], args[3])
 
     # Check if imu path has been specified
     if len(args) > 2:
         imu_data = GetImuData(args[2])
-        AddImuToBag(args[1], imu_data)
+        AddImuToBag(args[1], imu_data, args[3])
 
 def GetImuData(dir : str):
     '''Read accelerometer and gyroscope data from path'''
@@ -121,20 +139,20 @@ def GetImuData(dir : str):
         for path, names, files in os.walk(dir):
             for f in files:
                 if os.path.splitext(f)[1] in ['.csv', '.ods']:
-                    if 'accl' in f or 'accl' in path:
+                    if 'Accl' in f or 'Accl' in path:
                         accl_data = pd.read_csv(os.path.join( path, f ), header=None)
-                    elif 'gyro' in f or 'gyro' in path:
+                    elif 'Gyro' in f or 'Gyro' in path:
                         gyro_data = pd.read_csv(os.path.join( path, f ), header=None)
 
-    # Delete last column, corresponding to NaN
-    # accl_data.drop(accl_data.columns[-1], axis=1, inplace=True)
-    # gyro_data.drop(gyro_data.columns[-1], axis=1, inplace=True)
+    # Delete last column, corresponding to NaN. 
+    accl_data.drop(accl_data.columns[-1], axis=1, inplace=True)
+    gyro_data.drop(gyro_data.columns[-1], axis=1, inplace=True)
     
     imu_data = pd.concat([accl_data, gyro_data], axis=1)
 
     return imu_data
 
-def AddImuToBag(bagname : str, imu_data):
+def AddImuToBag(bagname : str, imu_data, standard):
 
     with rosbag.Bag(bagname, 'a') as bag:
 
@@ -156,7 +174,7 @@ def AddImuToBag(bagname : str, imu_data):
             # Populate the data elements for IMU
             # e.g. imu_msg.angular_velocity.x = df['a_v_x'][row]
 
-            bag.write("/imu", imu_msg, timestamp)
+            bag.write(STANDARD_TO_TOPIC[standard][-1], imu_msg, timestamp)
 
             # gps_msg = NavSatFix()
             # gps_msg.header.stamp = timestamp
@@ -169,6 +187,10 @@ if __name__ == "__main__":
     # if len( sys.argv ) == 3:
     #     CreateBag( sys.argv[1:])
     # else:
-    #     print( "Usage: SCRIPT_NAME.py imagedir bagfilename imudir")
-
-    CreateBag(args=["haud_test_img", "gopro_test.bag", "haud_test_imu"])
+    #     print( "Usage: SCRIPT_NAME.py imagedir bagfilename imudir data_standard")
+    
+    # OBS: Convert input images to grayscale
+    CreateBag(args=["Utilities/GoPro-data-extraction/Output/C1_GX040003/Images", 
+                    "Utilities/Bag-conversion/Output/C1_GX040003.bag", 
+                    "Utilities/GoPro-data-extraction/Output/C1_GX040003/Metadata",
+                    "euroc_mono"])

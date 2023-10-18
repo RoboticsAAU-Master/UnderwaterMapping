@@ -37,7 +37,7 @@ imu_params:
   sigma_acc_bias_c: 0.0015
   sigma_integration: 0.0
   g: 9.82
-  imu_rate: 200.0
+  imu_rate: 197.72
 
 imu_initialization:
   velocity: [0.0, 0, 0.0]

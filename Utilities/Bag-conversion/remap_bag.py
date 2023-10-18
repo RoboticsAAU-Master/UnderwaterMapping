@@ -4,8 +4,8 @@ from tqdm import tqdm
 import os
 
 num_files = 1
-filename = "archaeo_sequence_5.bag" # Name of the initial bag file
-path = "../svo_ws/src/bagfiles/AQUALOC/" + filename
+filename = "C1_GX040003.bag" # Name of the initial bag file
+path = "Utilities/Bag-conversion/Output/" + filename
 
 # Read bag file using bagpy for printing topics
 b = bagreader(path)
@@ -14,8 +14,8 @@ print(b.topic_table)
 
 # For EUROC mono
 remap_dict = {
-    "/camera/image_raw" : "/cam0/image_raw", # left
-    "/rtimulib_node/imu" : "/imu0"
+    "camera/image_raw" : "/cam0/image_raw", # left
+    "/imu" : "/imu0"
 }
 
 # For FLA stereo

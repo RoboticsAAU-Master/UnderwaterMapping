@@ -2,7 +2,7 @@ from rosbag import Bag
 from bagpy import bagreader
 import os
 
-path = "gopro_test.bag"
+path = "Utilities/Bag-conversion/Output/C1_GX040003.bag"
 
 ##### USING rosbag #####
 # bag = Bag(path, "r")

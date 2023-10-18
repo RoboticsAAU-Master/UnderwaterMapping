@@ -30,4 +30,4 @@ def save_all_frames(video_path, dir_path, basename, ext='jpg', frame_rm = 3):
 
 if __name__ == "__main__":
     # Input: path_to_video  output_folder  base_image_name  extension
-    save_all_frames('D:/Rob7/21-09-2023_pilot_day/GoPro1/GX040003.MP4', 'D:/Rob7/21-09-2023_pilot_day/GoPro1/data/temp/result_png', 'sample_video_img', 'png')
+    save_all_frames('C1_GX040003.MP4', 'Output', 'sample_video_img', 'png')
