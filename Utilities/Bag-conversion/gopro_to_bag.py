@@ -16,10 +16,10 @@ CAM_SAMPLE_RATE = 20.0 # Hz
 IMU_SAMPLE_RATE = 197.720721 # Hz
 
 STANDARD_TO_TOPIC = {
-    'euroc_mono' : ['/cam0/image_raw','/imu0'],
+    'euroc_mono' :   ['/cam0/image_raw','/imu0'],
     'euroc_stereo' : ['/cam0/image_raw','/cam1/image_raw','/imu0'],
-    'fla_mono' : ['/sync/cam0/image_raw','/sync/imu/imu'],
-    'fla_stereo' : ['/sync/cam0/image_raw','/sync/cam1/image_raw','/sync/imu/imu']
+    'fla_mono' :     ['/sync/cam0/image_raw','/sync/imu/imu'],
+    'fla_stereo' :   ['/sync/cam0/image_raw','/sync/cam1/image_raw','/sync/imu/imu']
 }
 
 def GetFilesFromDir(dir):
@@ -162,6 +162,7 @@ def AddImuToBag(bagname : str, imu_data, standard):
             row = row.tolist()
             timestamp = rospy.Time.from_sec(timer)
             timer += 1/IMU_SAMPLE_RATE
+            
             imu_msg = Imu()
             imu_msg.header.stamp = timestamp
             imu_msg.linear_acceleration.x = row[0]
@@ -171,17 +172,8 @@ def AddImuToBag(bagname : str, imu_data, standard):
             imu_msg.angular_velocity.y = row[4]
             imu_msg.angular_velocity.z = row[5]
 
-            # Populate the data elements for IMU
-            # e.g. imu_msg.angular_velocity.x = df['a_v_x'][row]
-
             bag.write(STANDARD_TO_TOPIC[standard][-1], imu_msg, timestamp)
 
-            # gps_msg = NavSatFix()
-            # gps_msg.header.stamp = timestamp
-
-            # # Populate the data elements for GPS
-
-            # bag.write("/gps", gpu_msg, timestamp)
 
 if __name__ == "__main__":
     # if len( sys.argv ) == 3:
