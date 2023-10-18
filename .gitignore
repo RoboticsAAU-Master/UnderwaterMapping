@@ -1,3 +1,6 @@
+# File type to ignore
+*.o
+
 # Folders to ignore
 .idea/
 
