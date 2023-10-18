@@ -1,5 +1,5 @@
-# File type to ignore
-*.o
+# Files to ignore
+Utilities/GoPro-data-extraction/gopro_data_extractor
 
 # Folders to ignore
 .idea/
@@ -10,7 +10,9 @@ __pycache__/
 *$py.class
 
 # C extensions
+*.o
 *.so
+*.a
 
 # Distribution / packaging
 .Python
