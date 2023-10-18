@@ -8,13 +8,17 @@
 #include "gpmf-parser/GPMF_utils.h"
 
 #define SHOW_GPMF_STRUCTURE			0
-#define	SHOW_THIS_FOUR_CC			"ACCL"//"ACCL" or "GYRO"
+#define	SHOW_THIS_FOUR_CC			"GYRO"//"ACCL" or "GYRO"
 
 extern void PrintGPMF(GPMF_stream* ms);
 GPMF_ERR readMP4File(char* filename);
 
 uint32_t show_gpmf_structure = SHOW_GPMF_STRUCTURE;
 uint32_t show_this_four_cc = STR2FOURCC(SHOW_THIS_FOUR_CC);
+
+FILE *csvFileAccel;
+FILE *csvFileGyro;
+
 
 int main(int argc, char* argv[]) {
 	GPMF_ERR ret = GPMF_OK;
@@ -43,15 +47,19 @@ GPMF_ERR readMP4File(char* filename) {
     metadatalength = GetDuration(mp4handle);
     if (metadatalength > 0.0) {
 		// Open CSV files for data saving
-		FILE *csvFileAccel = fopen("outputAccl.csv", "w");
-		if (csvFileAccel == NULL) {
-			printf("error: could not open outputAccl.csv");
-			return 1;  // Exit the program with an error code
+		if (SHOW_THIS_FOUR_CC == "ACCL") {
+			csvFileAccel = fopen("outputAccl.csv", "w");
+			if (csvFileAccel == NULL) {
+				printf("error: could not open outputAccl.csv");
+				return 1;  // Exit the program with an error code
+			}
 		}
-		FILE *csvFileGyro = fopen("outputGyro.csv", "w");
-		if (csvFileGyro == NULL) {
-			printf("error: could not open outputGyro.csv");
-			return 1;  // Exit the program with an error code
+		if (SHOW_THIS_FOUR_CC == "GYRO") {
+			csvFileGyro = fopen("outputGyro.csv", "w");
+			if (csvFileGyro == NULL) {
+				printf("error: could not open outputGyro.csv");
+				return 1;  // Exit the program with an error code
+			}
 		}
 		// Print out video framerate
         uint32_t fr_num, fr_dem;
@@ -238,8 +246,12 @@ GPMF_ERR readMP4File(char* filename) {
 	}
 
     // Close CVS file after data saving
-    fclose(csvFileAccel);
-    fclose(csvFileGyro);
+	if (SHOW_THIS_FOUR_CC == "ACCL") {
+    	fclose(csvFileAccel);
+	}
+	if (SHOW_THIS_FOUR_CC == "GYRO") {
+    	fclose(csvFileGyro);
+	}
 
     cleanup:
 		if (payloadres) FreePayloadResource(mp4handle, payloadres);
