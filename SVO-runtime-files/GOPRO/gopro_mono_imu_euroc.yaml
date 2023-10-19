@@ -12,6 +12,7 @@ cameras:
       cols: 1
       rows: 4
       data: [1.79855067e+03, 1.79749190e+03, 1.90616319e+03, 1.07593598e+03]
+      # 1080-by-1980: [3597.10134, 3594.9838, 3812.32638, 2151.87196]
     distortion:
       type: radial-tangential
       parameters:
