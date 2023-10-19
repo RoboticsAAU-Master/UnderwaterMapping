@@ -17,3 +17,5 @@ if __name__ == "__main__":
     get_offset("Utilities/GoPro-synchronise-audio/Output/GoPro1_Clap.MP4",
                "Utilities/GoPro-synchronise-audio/Output/GoPro2_Clap.MP4",
                "Utilities/GoPro-synchronise-audio/Output/Kridtgraven-20-09-23.txt")
+    
+    # Output gives how much the given video should be cut to for the two videos to be synchronised
