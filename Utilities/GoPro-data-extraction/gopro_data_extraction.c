@@ -28,8 +28,8 @@ int main(int argc, char* argv[]) {
 		ret = readMP4File(argv[1], argv[2]);
 	}
 	else {
-		ret = readMP4File("../../C3_GX040003.MP4", 
-						  "Output/C3_GX040003/Metadata");
+		ret = readMP4File("../../C4_GX040003.MP4", 
+						  "Output/C4_GX040003/Metadata");
 	}
 
 	printf("\n");

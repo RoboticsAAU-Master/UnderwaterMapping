@@ -12,7 +12,7 @@ from PIL import ImageFile
 
 import cv2
 
-CAM_SAMPLE_RATE = 20.0 # Hz
+CAM_SAMPLE_RATE = 60.0 # Hz
 IMU_SAMPLE_RATE = 197.720721 # Hz
 
 STANDARD_TO_TOPIC = {
@@ -182,7 +182,7 @@ if __name__ == "__main__":
     #     print( "Usage: SCRIPT_NAME.py imagedir bagfilename imudir data_standard")
     
     # OBS: Convert input images to grayscale
-    CreateBag(args=["Utilities/GoPro-data-extraction/Output/C1_GX040003/Images", 
-                    "Utilities/Bag-conversion/Output/C1_GX040003.bag", 
-                    "Utilities/GoPro-data-extraction/Output/C1_GX040003/Metadata",
+    CreateBag(args=["Utilities/GoPro-data-extraction/Output/C4_GX040003/Images", 
+                    "Utilities/Bag-conversion/Output/C4_GX040003.bag", 
+                    "Utilities/GoPro-data-extraction/Output/C4_GX040003/Metadata",
                     "euroc_mono"])
