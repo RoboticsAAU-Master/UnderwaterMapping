@@ -1,1 +1,1 @@
-Utilities/GoPro-synchronise-audio/Output/GoPro2_Clap.MP4 is ahead by: 0.049 [s]
+GoPro2_Clap.MP4 is ahead by: 0.049 [s]

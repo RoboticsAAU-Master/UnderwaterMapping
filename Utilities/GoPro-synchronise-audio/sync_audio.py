@@ -14,8 +14,8 @@ def get_offset(video1, video2, output_file):
 
 if __name__ == "__main__":
     # Input: path_video1  path_video2  output_file
-    get_offset("Utilities/GoPro-synchronise-audio/Output/GoPro1_Clap.MP4",
-               "Utilities/GoPro-synchronise-audio/Output/GoPro2_Clap.MP4",
+    get_offset("GoPro1_Clap.MP4",
+               "GoPro2_Clap.MP4",
                "Utilities/GoPro-synchronise-audio/Output/Kridtgraven-20-09-23.txt")
     
     # Output gives how much the given video should be cut to for the two videos to be synchronised
