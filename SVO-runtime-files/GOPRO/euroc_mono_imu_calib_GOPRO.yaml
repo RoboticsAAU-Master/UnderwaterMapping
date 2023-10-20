@@ -5,14 +5,14 @@ cameras:
     label: cam0
     id: 54812562fa109c40fe90b29a59dd7798
     line-delay-nanoseconds: 0
-    image_height: 2160
-    image_width: 3840
+    image_height: 1080
+    image_width: 1920
     type: pinhole
     intrinsics:
       cols: 1
       rows: 4
-      data: [1.79855067e+03, 1.79749190e+03, 1.90616319e+03, 1.07593598e+03]
-      # 1080-by-1920: [3597.10134, 3594.9838, 3812.32638, 2151.87196]
+      data: [899.275335, 898.74595, 953.081595, 537.96799]
+      # 1080-by-1920: [899.275335, 898.74595, 953.081595, 537.96799]
       # 2160-by-3840: [1.79855067e+03, 1.79749190e+03, 1.90616319e+03, 1.07593598e+03]
     distortion:
       type: radial-tangential
@@ -24,8 +24,8 @@ cameras:
     cols: 4
     rows: 4
     data: [ 0., 0., 1., 0.,
-           -1., 0., 0., 0.,
-            0., -1., 0., 0.,
+           -1.,  0., 0., 0.,
+            0.,  -1., 0., 0.,
             0., 0., 0., 1.]
 
 imu_params:
@@ -35,8 +35,8 @@ imu_params:
   omega_max: 17
   sigma_omega_c: 0.003
   sigma_acc_c: 0.05
-  sigma_omega_bias_c: 0.0001
-  sigma_acc_bias_c: 0.0015
+  sigma_omega_bias_c: 0 # 0.0001
+  sigma_acc_bias_c: 0 # 0.0015
   sigma_integration: 0.0
   g: 9.82
   imu_rate: 197.72
