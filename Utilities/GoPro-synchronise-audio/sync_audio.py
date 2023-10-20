@@ -1,4 +1,5 @@
 from syncstart import file_offset
+import os
 
 def get_offset(video1, video2, output_file):
     args = {'in1': video1,
@@ -10,7 +11,8 @@ def get_offset(video1, video2, output_file):
     # Write offset to file
     with open(output_file, "w") as file:
         # Write the value to the file
-        file.write(file_ahead + f" is ahead by: {offset} [s]\n")
+        file.write(os.path.basename(file_ahead) + f" is ahead by: {offset} [s]\n")
+
 
 if __name__ == "__main__":
     # Input: path_video1  path_video2  output_file
