@@ -32,9 +32,9 @@ def save_all_frames(video_path, dir_path, basename, ext, frame_keep, downscale):
 
 if __name__ == "__main__":
     # Input: path_to_video  output_folder  base_image_name  extension
-    save_all_frames('C4_GX040003.MP4', 
-                    'Utilities/GoPro-data-extraction/Output/C4_GX040003/Images', 
-                    'sample_video_img', 
+    save_all_frames('C4R_GX040510.MP4', 
+                    'Utilities/GoPro-data-extraction/Output/C4/Images', 
+                    'img_right', 
                     'png', 
                     1,
                     0.5)

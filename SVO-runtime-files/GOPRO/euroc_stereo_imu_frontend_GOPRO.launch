@@ -3,11 +3,12 @@
   <node pkg="svo_ros" type="svo_node" name="svo" clear_params="true" output="screen">
     <!-- Camera and IMU topics to subscribe to -->
     <param name="cam0_topic" value="/cam0/image_raw" type="str" />
+    <param name="cam1_topic" value="/cam1/image_raw" type="str" />
     <param name="imu_topic" value="/imu0" type="str" />
-    <param name="calib_file" value="euroc_mono_imu_calib_GOPRO.yaml" type="str" />
+    <param name="calib_file" value="$(find GOPRO)/euroc_stereo_imu_calib_GOPRO.yaml" type="str" />
 
-    <rosparam file="pinhole_GOPRO.yaml" />
-    <rosparam file="euroc_mono_imu_param_GOPRO.yaml" />
+    <rosparam file="$(find GOPRO)/pinhole_GOPRO.yaml" />
+    <rosparam file="$(find GOPRO)/euroc_stereo_imu_param_GOPRO.yaml" />
 
   </node>
 
