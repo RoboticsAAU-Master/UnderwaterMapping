@@ -3,10 +3,10 @@ from datetime import datetime, timedelta
 import os
 
 # Parameters
-video1_input = "GX010003.MP4"
+video1_input = "GX010003.MP4"  # Specify path with "/" or "\\" not "\"
 video2_input = "GX010510.MP4"
-video1_output = "GoPro1_Clap_Cut.MP4"
-video2_output = "GoPro2_Clap_Cut.MP4"
+video1_output = "Utilities/GoPro-synchronise-audio/Output/GoPro1_Clap_Cut.MP4"
+video2_output = "Utilities/GoPro-synchronise-audio/Output/GoPro2_Clap_Cut.MP4"
 offset_output = "Utilities/GoPro-synchronise-audio/Output/Kridtgraven-20-09-23.txt"
 start_time = "00:00:14.000"  # HH:MM:SS.mmm
 duration = "00:00:04.000"  # HH:MM:SS.mmm
@@ -32,7 +32,7 @@ def get_offset(video1, video2, output_file=None):
                 + f" is started {offset} [s] before the other.\n"
             )
 
-    if video1 == file_ahead:
+    if video1.split("/")[-1] == file_ahead:  # Check which video is ahead
         return offset  # Positive offset means video1 is ahead of video2
     else:
         return -offset  # Negative offset means video2 is ahead of video1
@@ -46,15 +46,15 @@ if __name__ == "__main__":
 
     # Crop video1
     os.system(
-        f'ffmpeg -i "{video1_input}" -ss {start_time} -t {duration} -c copy -map_metadata 0 "{video1_output}"'
+        f'ffmpeg -i "{video1_input}" -ss {start_time} -t {duration} -c copy -map_metadata 0 "{video1_output}" -y'
     )
 
     # Crop video2
     start_time_dt = datetime.strptime(start_time, "%H:%M:%S.%f")  # Convert to datetime
     start_time_dt += timedelta(
         seconds=offset
-    )  # Add offset (negative if video1 is ahead of video2)
+    )  # Add offset to start time (offset is negative if video2 is ahead of video1)
     start_time = start_time_dt.strftime("%H:%M:%S.%f")  # Convert back to string
     os.system(
-        f'ffmpeg -i "{video2_input}" -ss {start_time} -t {duration} -c copy -map_metadata 0 "{video2_output}"'
+        f'ffmpeg -i "{video2_input}" -ss {start_time} -t {duration} -c copy -map_metadata 0 "{video2_output}" -y'
     )
