@@ -2,7 +2,7 @@ pipeline_is_stereo: True
 
 grid_size: 60
 use_async_reprojectors: True
-use_imu: True
+use_imu: False
 poseoptim_prior_lambda: 0.0
 img_align_prior_lambda_rot: 0.0
 img_align_prior_lambda_trans: 0.0
