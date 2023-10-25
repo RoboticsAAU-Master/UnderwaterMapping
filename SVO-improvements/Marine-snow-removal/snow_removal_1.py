@@ -4,10 +4,32 @@ import matplotlib.pyplot as plt
 from guided_filter import _gf_gray
 from time import time
 
+### "Marine snow detection for real time feature detection" ###
+# https://doi.org/10.1109/AUV53081.2022.9965895
+
 
 # Function to get index for circular array
 def wrap_index(index: int) -> int:
     return index % 3
+
+
+### PARAMETERS ###
+# Coefficients for Y-channel (BGR)
+COEFFS = np.array([0.114, 0.587, 0.299])
+# Radius of mean filter
+r = 5
+# Regularisation parameter that controls degree of smoothness for guided filter
+eps = 0.05
+# Subsampling ratio for guided filter
+s = 4
+# Kernel for tophat morphology
+kernel1 = np.ones((3, 3), np.uint8)
+# Kernel for density map
+w = 50
+kernel2 = np.ones((w, w)) / (w**2)
+# Kernel for open/dilation operation of feature mask
+kernel3 = cv.getStructuringElement(cv.MORPH_RECT, (w, w))
+##################
 
 
 cap = cv.VideoCapture("marine_snow.MP4")
@@ -18,28 +40,15 @@ if not cap.isOpened():
 
 NUM_FRAMES = int(cap.get(cv.CAP_PROP_FRAME_COUNT))
 
-frame_counter = 0
-
-images = []
-COEFFS = np.array([0.114, 0.587, 0.299])  # Coefficients for Y-channel (BGR)
-idx = 1  # Index for accesing images
-r = 5  # Radius of mean filter
-eps = 0.05  # Regularisation parameter that controls degree of smoothness
-s = 4  # Subsampling ratio
-
 # Create window with freedom of dimensions
 cv.namedWindow("Output", cv.WINDOW_NORMAL)
 # Create window with freedom of dimensions
 cv.namedWindow("Original", cv.WINDOW_NORMAL)
 
 start_time = time()
-# Kernel for tophat morphology
-kernel1 = np.ones((3, 3), np.uint8)
-w = 50  # Kernel size for density map
-kernel2 = np.ones((w, w)) / (w**2)
-# Kernel for open/dilation operation of feature mask
-kernel3 = cv.getStructuringElement(cv.MORPH_RECT, (w, w))
-
+frame_counter = 0
+images = []
+idx = 1  # Index for accesing images
 while True:
     # Capture frame-by-frame
     ret, frame = cap.read()
