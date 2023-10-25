@@ -1,5 +1,6 @@
 # Files to ignore
 Utilities/GoPro-data-extraction/gopro_data_extractor
+*.MP4
 
 # Folders to ignore
 .idea/

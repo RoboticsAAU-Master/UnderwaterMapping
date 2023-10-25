@@ -48,7 +48,7 @@ cameras:
     cols: 4
     rows: 4
     data: [ 0., 0., 1., 0., 
-           -1., 0., 0., -0.085, # Baseline
+           -1., 0., 0., -0.10, # Baseline
             0., -1., 0., 0.,
             0., 0., 0., 1.]
 
@@ -62,7 +62,7 @@ imu_params:
   sigma_omega_bias_c: 0.0
   sigma_acc_bias_c: 0.0
   sigma_integration: 0.0
-  g: 9.82
+  g: 9.816
   imu_rate: 197.72
 
 imu_initialization:

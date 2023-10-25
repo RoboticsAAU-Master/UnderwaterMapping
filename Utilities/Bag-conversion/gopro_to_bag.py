@@ -182,7 +182,7 @@ if __name__ == "__main__":
     #     print( "Usage: SCRIPT_NAME.py imagedir bagfilename imudir data_standard")
     
     # OBS: Convert input images to grayscale
-    CreateBag(args=["Utilities/GoPro-data-extraction/Output/C4_GX040003/Images", 
-                    "Utilities/Bag-conversion/Output/C4_GX040003.bag", 
-                    "Utilities/GoPro-data-extraction/Output/C4_GX040003/Metadata",
-                    "euroc_mono"])
+    CreateBag(args=["Utilities/GoPro-data-extraction/Output/C4/Images", 
+                    "Utilities/Bag-conversion/Output/C4.bag", 
+                    "Utilities/GoPro-data-extraction/Output/C4/Metadata",
+                    "euroc_stereo"])
