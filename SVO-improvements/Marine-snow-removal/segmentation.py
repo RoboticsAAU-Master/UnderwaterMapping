@@ -18,7 +18,7 @@ def density_segmentation(
     # Perform closing to remove holes in blobs
     P_density = cv.morphologyEx(P_density, cv.MORPH_DILATE, morph_kernel)
 
-    return P_density * 255
+    return P_density
 
 
 # Segmentation based on k-means clustering
