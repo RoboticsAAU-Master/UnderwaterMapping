@@ -32,7 +32,7 @@ kernel3 = cv.getStructuringElement(cv.MORPH_RECT, (w, w))
 ##################
 
 
-cap = cv.VideoCapture("marine_snow.MP4")
+cap = cv.VideoCapture("Grass.MP4")
 # cap = cv.VideoCapture("C4_GX040003.MP4")
 if not cap.isOpened():
     print("Cannot open camera")
@@ -76,6 +76,9 @@ while True:
         if len(images) < 3:
             disp_frame = np.zeros_like(frame)
             continue
+    else:
+        # Update the future image
+        images[wrap_index(idx + 1)] = Y_hp
 
     prev_img = images[wrap_index(idx - 1)]
     curr_img = images[wrap_index(idx)]
@@ -100,11 +103,6 @@ while True:
     P_density = cv.morphologyEx(P_density, cv.MORPH_DILATE, kernel3)
     # Isolate snow by subtracting feature mask
     snow_mask = cv.subtract(P, P_density)
-
-    # Update the future image
-    images[wrap_index(idx - 1)] = Y_hp
-
-    idx += 1
 
     # Create an RGB image so that it can be overlayed with the frame
     P_mask_rgb = cv.merge(
@@ -140,6 +138,7 @@ while True:
 
     start_time = time()
     disp_frame = frame
+    idx += 1
 
     # If the last frame is reached, reset the capture and the frame_counter
     if frame_counter == NUM_FRAMES - 1:
