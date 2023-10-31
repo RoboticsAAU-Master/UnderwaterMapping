@@ -31,17 +31,17 @@ eps = 0.05
 s = 4
 # Kernel for tophat morphology
 kernel1 = np.ones((3, 3), np.uint8)
+# Kernel for mean filtering
+w1 = 50
+# Threshold for mean-centered image
+th_mean = 5
 # Kernel for density map
-w = 50
-kernel2 = np.ones((w, w)) / (w**2)
+w2 = 50
+kernel2 = np.ones((w2, w2)) / (w2**2)
 # Kernel for open/dilation operation of feature mask
-kernel3 = cv.getStructuringElement(cv.MORPH_RECT, (w, w))
+kernel3 = cv.getStructuringElement(cv.MORPH_RECT, (w2, w2))
 # Threshold for dense regions
-th_dense = 4
-# Number of superpixels (components)
-num_components = 100
-# Compactness parameter for superpixels
-compactness = 10
+th_dense = 5
 ##################
 
 
@@ -54,7 +54,8 @@ if not cap.isOpened():
 NUM_FRAMES = int(cap.get(cv.CAP_PROP_FRAME_COUNT))
 
 # Create window with freedom of dimensions
-cv.namedWindow("Output", cv.WINDOW_NORMAL)
+cv.namedWindow("Detection", cv.WINDOW_NORMAL)
+cv.namedWindow("Snow Removed", cv.WINDOW_NORMAL)
 
 start_time = time()
 frame_counter = 0
@@ -74,15 +75,16 @@ while True:
     # Converting input image to gray with weights
     Y = cv.transform(frame, COEFFS.reshape((1, 3)))
 
-    Y_blurred = cv.blur(Y, (50, 50), cv.BORDER_REPLICATE)
-    # Compute rectified image (even lighting)
-    rectified = cv.subtract(Y, Y_blurred)
-    # Threshold rectified image
-    rectified = cv.threshold(rectified, 5, 255, cv.THRESH_BINARY)[1]
+    # Mean filtering the gray-scale image
+    Y_blurred = cv.blur(Y, (w1, w1), cv.BORDER_REPLICATE)
+    # Compute mean-centered image
+    mean_centering = cv.subtract(Y, Y_blurred)
+    # Threshold the mean-centered image to obtain a binary mask of snow candidates
+    mean_centering = cv.threshold(mean_centering, th_mean, 255, cv.THRESH_BINARY)[1]
     # Compute binary density map
-    density_map = density_segmentation(rectified, kernel2, th_dense, kernel3)
+    density_map = density_segmentation(mean_centering, kernel2, th_dense, kernel3)
     # Remove dense areas (features)
-    snow_mask = cv.subtract(rectified, density_map)
+    snow_mask = cv.subtract(mean_centering, density_map)
 
     # Blob analysis
     num_labels, blobs, stats, centroids = cv.connectedComponentsWithStats(snow_mask)
@@ -99,6 +101,11 @@ while True:
     blob_mask[remove_mask] = 255
     snow_mask2 = cv.subtract(snow_mask, blob_mask)
 
+    # Copy original image
+    snow_removed = Y.copy()
+    # Applying blurring only in mask region
+    snow_removed[snow_mask2 > 0] = Y_blurred[snow_mask2 > 0]
+
     # Overlay snow mask with original image
     P_mask_rgb = cv.merge([snow_mask2, snow_mask2, snow_mask2])
     P_overlay = cv.addWeighted(frame, 1, P_mask_rgb, 1, 0)
@@ -114,9 +121,11 @@ while True:
         cv.LINE_AA,
     )
 
-    concatenate_image = cv.hconcat([P_overlay, P_mask_rgb])
+    concatenate_detection = cv.hconcat([P_overlay, P_mask_rgb])
+    concatenate_removal = cv.hconcat([Y, snow_removed])
 
-    cv.imshow("Output", concatenate_image)
+    cv.imshow("Detection", concatenate_detection)
+    cv.imshow("Snow Removed", concatenate_removal)
 
     if cv.waitKey(1) == ord("q"):
         break
