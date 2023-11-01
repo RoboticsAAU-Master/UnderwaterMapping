@@ -1,7 +1,6 @@
 import numpy as np
 import cv2 as cv
 import matplotlib.pyplot as plt
-from guided_filter import _gf_gray
 from time import time
 from segmentation import (
     color_segmentation,
@@ -23,10 +22,6 @@ def wrap_index(index: int) -> int:
 COEFFS = np.array([0.114, 0.587, 0.299])
 # Radius of mean filter
 r = 5
-# Regularisation parameter that controls degree of smoothness for guided filter
-eps = 0.05
-# Subsampling ratio for guided filter
-s = 4
 # Kernel for tophat morphology
 kernel1 = np.ones((3, 3), np.uint8)
 # Kernel for density map
@@ -39,8 +34,8 @@ th_dense = 6
 ##################
 
 
-cap = cv.VideoCapture("Grass.MP4")
-# cap = cv.VideoCapture("C4_GX040003.MP4")
+cap = cv.VideoCapture("Input/Grass.MP4")
+
 if not cap.isOpened():
     print("Cannot open camera")
     exit()
@@ -113,6 +108,7 @@ while True:
     # Overlay snow mask with original image
     P_overlay = cv.addWeighted(disp_frame, 1, P_mask_rgb, 0.5, 0)
 
+    # Overlay FPS
     P_overlay = cv.putText(
         P_overlay,
         f"FPS: {(1 / (time() - start_time)):.2f}",
@@ -127,9 +123,11 @@ while True:
     concatenate_image = cv.hconcat(
         [P_overlay, cv.merge([snow_mask, snow_mask, snow_mask])]
     )
-    # cv.imshow("P", P_density)
+
+    # Output images
     cv.imshow("Output", concatenate_image)
     cv.imshow("Original", disp_frame)
+
     if cv.waitKey(1) == ord("q"):
         break
 

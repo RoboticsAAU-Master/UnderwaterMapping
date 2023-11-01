@@ -1,7 +1,6 @@
 import numpy as np
 import cv2 as cv
 import matplotlib.pyplot as plt
-from guided_filter import _gf_gray
 from time import time
 from segmentation import (
     color_segmentation,
@@ -23,12 +22,6 @@ def wrap_index(index: int) -> int:
 ### PARAMETERS ###
 # Coefficients for Y-channel (BGR)
 COEFFS = np.array([0.114, 0.587, 0.299])
-# Radius of mean filter
-r = 5
-# Regularisation parameter that controls degree of smoothness for guided filter
-eps = 0.05
-# Subsampling ratio for guided filter
-s = 4
 # Kernel for tophat morphology
 kernel1 = np.ones((3, 3), np.uint8)
 # Kernel for mean filtering
@@ -46,7 +39,7 @@ th_dense = 5
 
 
 # cap = cv.VideoCapture("marine_snow.MP4")
-cap = cv.VideoCapture("Grass.MP4")
+cap = cv.VideoCapture("Input/Grass.MP4")
 if not cap.isOpened():
     print("Cannot open camera")
     exit()

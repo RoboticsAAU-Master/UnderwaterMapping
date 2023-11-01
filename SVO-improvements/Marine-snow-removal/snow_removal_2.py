@@ -22,7 +22,7 @@ t = 3
 q = 32
 # Threshold (equation 3)
 c = 10
-# Spatial patch size (between 1 and 7) (Should be less thann q)
+# Spatial patch size (between 1 and 7) (Should be less than q)
 s = 3
 r = s // 2
 # Threshold (equation 7)
@@ -37,7 +37,7 @@ kernel2 = cv.getStructuringElement(cv.MORPH_RECT, (w, w))
 ##################
 
 
-cap = cv.VideoCapture("Grass.MP4")
+cap = cv.VideoCapture("Input/Grass.MP4")
 if not cap.isOpened():
     print("Cannot open camera")
     exit()
@@ -166,6 +166,7 @@ while True:
         )
     P_overlay = cv.addWeighted(disp_frame, 1, combined_mask, 0.5, 0)
 
+    # Overlay FPS
     P_overlay = cv.putText(
         P_overlay,
         f"FPS: {(1 / (time() - start_time)):.2f}",
