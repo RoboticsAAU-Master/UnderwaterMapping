@@ -88,17 +88,17 @@ class Trajectory3D:
 
     def _get_trajectory(self, orientation_type=OrientationType.EULER):
         match orientation_type:
-            case Trajectory3D.OrientationType.EULER:
+            case Trajectory3D.OrientationType.EULER:  # rx, ry, rz
                 orientation = np.array([self.rot_x, self.rot_y, self.rot_z]).reshape(
                     len(self.rot_x), 3
                 )
-            case Trajectory3D.OrientationType.ROTATION_MATRIX:
+            case Trajectory3D.OrientationType.ROTATION_MATRIX:  # rx1, rx2, rx3, ry1, ry2, ry3, rz1, rz2, rz3
                 orientation = (
                     self._euler_to_rotation_matrix()
-                    .flatten()
+                    .T.flatten()
                     .reshape(len(self.rot_x), 9)
                 )
-            case Trajectory3D.OrientationType.QUATERNION:
+            case Trajectory3D.OrientationType.QUATERNION:  # qx, qy, qz, qw
                 orientation = self._euler_to_quaternions().reshape(len(self.rot_x), 4)
 
         position = np.array([self.x, self.y, self.z]).reshape(len(self.x), 3)
