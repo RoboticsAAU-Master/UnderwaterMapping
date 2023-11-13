@@ -3,6 +3,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import time
 import transforms3d as t3d
+from enum import Enum
 
 
 class DataLoader:
@@ -80,21 +81,72 @@ class Trajectory3D:
         self.rot_y = np.deg2rad(self.rot_y)
         self.rot_z = np.deg2rad(self.rot_z)
 
-    def _get_trajectory(self):
-        return np.array([self.x, self.y, self.z, self.rot_x, self.rot_y, self.rot_z]).T
+    class OrientationType(Enum):
+        EULER = 0
+        ROTATION_MATRIX = 1
+        QUATERNION = 2
+
+    def _get_trajectory(self, orientation_type=OrientationType.EULER):
+        match orientation_type:
+            case Trajectory3D.OrientationType.EULER:
+                orientation = np.array([self.rot_x, self.rot_y, self.rot_z]).reshape(
+                    len(self.rot_x), 3
+                )
+            case Trajectory3D.OrientationType.ROTATION_MATRIX:
+                orientation = (
+                    self._euler_to_rotation_matrix()
+                    .flatten()
+                    .reshape(len(self.rot_x), 9)
+                )
+            case Trajectory3D.OrientationType.QUATERNION:
+                orientation = self._euler_to_quaternions().reshape(len(self.rot_x), 4)
+
+        position = np.array([self.x, self.y, self.z]).reshape(len(self.x), 3)
+
+        return np.concatenate((position, orientation), axis=1)
 
     def _get_trajectory_time_seconds(self):
         return self.timestamps_seconds[-1]
 
-    def _euler_to_direction_vectors(self):
-        # Convert the euler angles to direction vectors
-        direction_vectors = np.zeros((len(self.rot_x), 3))
+    def _euler_to_rotation_matrix(self):
+        # Convert the euler angles to rotation matrix
+        rotation_matrix = np.zeros((len(self.rot_x), 3, 3))
         for i in range(len(self.rot_x)):
-            direction_vectors[i] = t3d.euler.euler2mat(
+            rotation_matrix[i] = t3d.euler.euler2mat(
                 self.rot_x[i], self.rot_y[i], self.rot_z[i], "sxyz"
-            )[:, 0]
+            )
 
-        return direction_vectors
+        return rotation_matrix
+
+    def _euler_to_quaternions(self):
+        # Convert the euler angles to quaternions
+        quaternions = np.zeros((len(self.rot_x), 4))
+        for i in range(len(self.rot_x)):
+            quaternions[i] = t3d.euler.euler2quat(
+                self.rot_x[i], self.rot_y[i], self.rot_z[i], "sxyz"
+            )
+
+        return quaternions
+
+    def output_as_txt(self, output_file):
+        # Convert the euler angles to quaternions
+        trajectory_quat = self._get_trajectory(
+            orientation_type=Trajectory3D.OrientationType.QUATERNION
+        )
+
+        # Create a header row
+        header_row = ["timestamp", "tx", "ty", "tz", "qx", "qy", "qz", "qw"]
+
+        # Save the trajectory data with reference in the header row
+        trajectory_txt = np.concatenate(
+            (self.timestamps_seconds.reshape(-1, 1), trajectory_quat), axis=1
+        )
+
+        # Add the header row to the trajectory data
+        trajectory_txt = np.vstack((header_row, trajectory_txt))
+
+        # Save the trajectory data as a txt file
+        np.savetxt(output_file, trajectory_txt, delimiter=" ", fmt="%s")
 
     def plot(self, simulate=False, update_time=None):
         # Create a 3d figure
@@ -111,8 +163,8 @@ class Trajectory3D:
         ax.set_ylim3d(min(self.y), max(self.y))
         ax.set_zlim3d(min(self.z), max(self.z))
 
-        # Convert the euler angles to direction vectors
-        direction_vectors = self._euler_to_direction_vectors()
+        # Convert the euler angles to direction vectors (x-direction in rotation matrix)
+        direction_vectors = self._euler_to_rotation_matrix()[:, :, 0]
 
         # Plot the trajectory simulated in real time
         if simulate:
@@ -203,4 +255,7 @@ if __name__ == "__main__":
     print("Trajectory time: " + str(trajectory_time) + " seconds")
 
     # Plot the trajectory
-    trajectory.plot(simulate=True, update_time=0.1)
+    trajectory.plot(simulate=False, update_time=0.1)
+
+    # Output trajectory as txt file
+    trajectory.output_as_txt("Data-collection/trajectory.txt")

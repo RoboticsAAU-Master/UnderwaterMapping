@@ -15,18 +15,18 @@ def in_bounds(shape, x, y):
     return x >= 0 and x < shape[1] and y >= 0 and y < shape[0]
 
 
-def get_background_hue(image_hsv):
+def get_background(image_hsv, channel):
     # Get hue channel and flatten
-    h = image_hsv[:, :, 0]
-    h = h.flatten()
+    img_channel = image_hsv[:, :, channel]
+    img_channel = img_channel.flatten()
 
     # Calculate histogram
-    hist = np.histogram(h, bins=180, range=(0, 180))
+    hist = np.histogram(img_channel, bins=180, range=(0, 180))
 
     # Obtain the background hue
-    bg_hue = np.argmax(hist[0])
+    bg_val = np.argmax(hist[0])
 
-    return bg_hue
+    return bg_val
 
 
 def get_random_samples(ref_image, num_samples, method="halton"):
@@ -106,12 +106,14 @@ def get_motion_direction(ref_image, centre_type, x, y, noise_var=0.0):
     return stretch_direction
 
 
-def generate_snow(ref_image):
+def generate_snow(ref_image, mask=False):
     # Convert to hsv color space
     hsv = cv.cvtColor(ref_image, cv.COLOR_BGR2HSV)
 
+    background_val = get_background(hsv, 2)
+
     # Calculate the number of snow particles
-    num_range = (100, 300)
+    num_range = (0, 100)
     num_snow = np.random.randint(num_range[0], num_range[1] + 1)
 
     # Generate Halton sequence
@@ -171,13 +173,18 @@ def generate_snow(ref_image):
     snow_mask = cv.cvtColor(snow_mask, cv.COLOR_HSV2BGR)
 
     # Overlay snow mask with original image
-    out_image = cv.addWeighted(ref_image, 1, snow_mask, 0.3, 0)
+    overlay_percentage = (background_val / 255) * (0.4 - 0.1) + 0.1
+    out_image = cv.addWeighted(ref_image, 1, snow_mask, overlay_percentage, 0)
 
-    # out_image = ref_image.copy()
+    _, non_zero_mask = cv.threshold(snow_mask[:, :, 2], 0, 255, cv.THRESH_BINARY)
     # non_zero_mask = snow_mask[:, :, 2] != 0
+    # out_image = ref_image.copy()
     # out_image[non_zero_mask] = snow_mask[non_zero_mask]
 
-    return out_image
+    if mask:
+        return out_image, non_zero_mask
+    else:
+        return out_image
 
 
 if __name__ == "__main__":
@@ -185,7 +192,7 @@ if __name__ == "__main__":
     scale = 0.5
 
     # Read image
-    img = cv.imread("Input/UW_img.tif", cv.IMREAD_COLOR)
+    img = cv.imread("Artificial-snow/Input/original_image_1.png", cv.IMREAD_COLOR)
     img_resized = cv.resize(img, (0, 0), fx=scale, fy=scale)
 
     # Resize images
