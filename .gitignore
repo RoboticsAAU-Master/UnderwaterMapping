@@ -4,6 +4,8 @@ Utilities/GoPro-data-extraction/gopro_data_extractor
 
 # Folders to ignore
 .idea/
+SVO-improvements/Marine-snow-removal/CNN/data/*
+SVO-improvements/Marine-snow-removal/CNN/output/*
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

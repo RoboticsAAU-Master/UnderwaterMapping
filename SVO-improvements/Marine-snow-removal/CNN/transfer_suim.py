@@ -7,7 +7,7 @@ import os
 import numpy as np
 from os.path import join, exists
 from keras.models import Model
-from keras.optimizers import Adam
+from keras.optimizers.legacy import Adam
 from keras.layers import Conv2D
 from keras import callbacks
 
@@ -16,44 +16,28 @@ from models.suim_net import SUIM_Net
 from utils.data_utils import *
 
 # Directory for dataset
-train_dir = "data/"
+train_dir = "data/train/"
 
 # ckpt directory
-ckpt_dir = "ckpt/custom/"
+ckpt_base_dir = "ckpt/original/"
+ckpt_custom_dir = "ckpt/custom/"
 base_ = "VGG"  # or 'RSB'
 
 # Define model which will be loaded
 if base_ == "RSB":
     im_res_ = (320, 240, 3)
-    ckpt_name = "custom_suimnet_rsb.hdf5"
+    ckpt_name_base = "suimnet_rsb5.hdf5"
+    ckpt_name_custom = "custom_suimnet_rsb5.hdf5"
 else:
     im_res_ = (320, 256, 3)
-    ckpt_name = "custom_suimnet_vgg.hdf5"
+    ckpt_name_base = "suimnet_vgg5.hdf5"
+    ckpt_name_custom = "custom_suimnet_vgg5.hdf5"
 
-model_ckpt_name = join(ckpt_dir, ckpt_name)
+base_model_path = join(ckpt_base_dir, ckpt_name_base)
+custom_model_path = join(ckpt_custom_dir, ckpt_name_custom)
 
-if not exists(ckpt_dir):
-    os.makedirs(ckpt_dir)
-
-# Directory to save the output
-samples_dir = "data/test/output/"
-BG_dir = samples_dir + "BG/"  # Background
-MS_dir = samples_dir + "MS/"  # Marine Snow
-if not exists(samples_dir):
-    os.makedirs(samples_dir)
-if not exists(BG_dir):
-    os.makedirs(BG_dir)
-if not exists(MS_dir):
-    os.makedirs(MS_dir)
-
-# input/output shapes
-base_ = "RSB"  # or 'VGG'
-if base_ == "RSB":
-    im_res_ = (320, 240, 3)
-    ckpt_name = "suimnet_rsb5.hdf5"
-else:
-    im_res_ = (320, 256, 3)
-    ckpt_name = "suimnet_vgg5.hdf5"
+if not exists(ckpt_custom_dir):
+    os.makedirs(ckpt_custom_dir)
 
 # Define width and height for input and output
 im_h, im_w = im_res_[1], im_res_[0]
@@ -68,7 +52,7 @@ original_model = original_suimnet.model
 print(original_model.summary())
 
 # Load the weights from the saved file
-original_model.load_weights(join("ckpt/original/", ckpt_name))
+original_model.load_weights(base_model_path)
 
 # Freeze the weights of the original model, as we will only train the custom top layer
 original_model.trainable = False
@@ -92,11 +76,12 @@ custom_model = Model(
 
 # "Freeze" the behavior of this model
 custom_model.compile(
-    optimizer=Adam(learning_rate=1e-5),  # Low learning rate
+    optimizer=Adam(learning_rate=1e-4),  # Low learning rate
     loss="binary_crossentropy",
     metrics=["accuracy"],
 )
 
+# Print model summary
 print(custom_model.summary())
 
 # Note that we must make sure to pass training=False when calling the base model, so that it runs in inference mode,
@@ -120,7 +105,7 @@ data_gen_args = dict(
 
 # Setup model checkpoint
 model_checkpoint = callbacks.ModelCheckpoint(
-    model_ckpt_name,
+    custom_model_path,
     monitor="loss",
     verbose=1,
     mode="auto",
@@ -140,11 +125,8 @@ train_gen = trainDataGenerator(
     target_size=(im_res_[1], im_res_[0]),
 )
 
+
 # Train the model
-custom_model.fit(
-    train_gen,
-    steps_per_epoch=5000,
-    epochs=num_epochs,
-    callbacks=[model_checkpoint],
-    verbose=1,
+custom_model.fit_generator(
+    train_gen, steps_per_epoch=500, epochs=num_epochs, callbacks=[model_checkpoint]
 )

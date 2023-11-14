@@ -9,7 +9,7 @@ from keras.layers import Convolution2D as Conv2D  # for encoder and decoder
 from keras.layers import UpSampling2D  # for decoder
 from keras.layers import BatchNormalization, Activation, MaxPooling2D  # for encoder
 from keras.layers import add, Lambda, Concatenate, ZeroPadding2D  # for skip connections
-from keras.optimizers import Adam, SGD  # for training
+from keras.optimizers.legacy import Adam, SGD  # for training
 from keras.applications.vgg16 import VGG16  # for encoder based on VGG-16
 
 
