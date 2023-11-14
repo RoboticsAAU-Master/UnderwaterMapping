@@ -58,7 +58,7 @@ original_model.load_weights(base_model_path)
 original_model.trainable = False
 
 # Number of classes for the custom top layer
-n_classes = 2  # Marine snow and background
+n_classes = 1  # Marine snow (Everything else besides this class is background)
 
 # Create custom top layer
 custom_top = Conv2D(n_classes, (3, 3), padding="same", activation="sigmoid")
@@ -112,6 +112,8 @@ model_checkpoint = callbacks.ModelCheckpoint(
     save_weights_only=True,
     save_best_only=True,
 )
+# Early stopping callback
+early_stop_callback = callbacks.EarlyStopping(monitor="loss", patience=3)
 
 # Create data generator, which gives tuples of images and masks
 train_gen = trainDataGenerator(
@@ -128,5 +130,8 @@ train_gen = trainDataGenerator(
 
 # Train the model
 custom_model.fit_generator(
-    train_gen, steps_per_epoch=500, epochs=num_epochs, callbacks=[model_checkpoint]
+    train_gen,
+    steps_per_epoch=100,
+    epochs=num_epochs,
+    callbacks=[early_stop_callback, model_checkpoint],
 )

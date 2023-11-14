@@ -15,14 +15,10 @@ test_dir = "data/test/images/"
 
 # Directory to save the output
 samples_dir = "output/"
-BG_dir = samples_dir + "BG/"  # Background
 MS_dir = samples_dir + "MS/"  # Marine Snow
 
 if not exists(samples_dir):
     os.makedirs(samples_dir)
-
-if not exists(BG_dir):
-    os.makedirs(BG_dir)
 
 if not exists(MS_dir):
     os.makedirs(MS_dir)
@@ -86,9 +82,7 @@ def testGenerator():
         # get filename
         img_name = ntpath.basename(p).split(".")[0] + ".bmp"
         # save individual output masks
-        BGs = np.reshape(out_img[0, :, :, 0], (im_h, im_w))
         MSs = np.reshape(out_img[0, :, :, 1], (im_h, im_w))
-        Image.fromarray(np.uint8(BGs * 255.0)).save(BG_dir + img_name)
         Image.fromarray(np.uint8(MSs * 255.0)).save(MS_dir + img_name)
 
 
