@@ -4,6 +4,24 @@ from scipy.stats import qmc
 from enum import Enum
 import math
 
+### PARAMETERS ###
+NUM_PARTICLES_RANGE = (0, 100)  # range:[0, inf)
+SAMPLING_METHOD = "random"  # "halton" or "random
+SPEED_RANGE = (1, 6)  # range:[1, inf)
+SATURATION_RANGE = (0, 80)  # range:[0, 255]
+VALUE_RANGE = (50, 255)  # range:[0, 255]
+MEDIAN_BLUR_KERNEL_SIZE = 5  # range:[1, inf), (odd)
+MEDIAN_BLUR_SATURATION_THRESH = 50  # range:[0, 255]
+MEDIAN_BLUR_VALUE_THRESH = 240  # range:[0, 255]
+SIGMA_SATURATION_THRESH = 5  # range:[0, 255]
+SIGMA_VALUE_THRESH = 5  # range:[0, 255]
+MOTION_DIRECTION_NOISE_VAR_MAX = 0.2  # range:[0, 1]
+STRETCH_SIZE_RANGE = (1, 30)  # range:[1, inf)
+WIDTH_SIZE_RANGE = (1, 15)  # range:[1, inf)
+SNOW_PATCH_VALUE_NOISE = 20  # range:[0, 255]
+OVERLAY_PERCENTAGE_RANGE = (0.1, 0.4)  # range:[0, 1]
+##################
+
 
 class Motion_Direction(Enum):
     FOWARD_BACKWARD = 0
@@ -27,6 +45,21 @@ def get_background(image_hsv, channel):
     bg_val = np.argmax(hist[0])
 
     return bg_val
+
+
+def get_std(image_hsv):
+    hsv_32 = np.float32(image_hsv)
+
+    # Calculate mean of image
+    mu = cv.blur(hsv_32, (7, 7), borderType=cv.BORDER_CONSTANT)
+
+    # Calculate mean of image squared
+    mu2 = cv.blur(np.multiply(hsv_32, hsv_32), (7, 7), borderType=cv.BORDER_CONSTANT)
+
+    # Calculate variance of image
+    sigma = np.sqrt(np.subtract(mu2, np.multiply(mu, mu)))
+
+    return sigma
 
 
 def get_random_samples(ref_image, num_samples, method="halton"):
@@ -111,23 +144,14 @@ def generate_snow(ref_image, mask=False):
     hsv = cv.cvtColor(ref_image, cv.COLOR_BGR2HSV)
 
     background_val = get_background(hsv, 2)
-    median_blur = cv.medianBlur(hsv, 5)
-
-    hsv_32 = np.float32(hsv)
-    # Calculate mean of image
-    mu = cv.blur(hsv_32, (7, 7), borderType=cv.BORDER_CONSTANT)
-    # Calculate mean of image squared
-    mu2 = cv.blur(np.multiply(hsv_32, hsv_32), (7, 7), borderType=cv.BORDER_CONSTANT)
-    # Calculate variance of image
-    test = np.subtract(mu2, np.multiply(mu, mu))
-    sigma = np.sqrt(np.subtract(mu2, np.multiply(mu, mu)))
+    median_blur = cv.medianBlur(hsv, MEDIAN_BLUR_KERNEL_SIZE)
+    sigma = get_std(hsv)
 
     # Calculate the number of snow particles
-    num_range = (0, 100)
-    num_snow = np.random.randint(num_range[0], num_range[1] + 1)
+    num_snow = np.random.randint(NUM_PARTICLES_RANGE[0], NUM_PARTICLES_RANGE[1] + 1)
 
-    # Generate Halton sequence
-    samples_coords = get_random_samples(ref_image, num_snow, method="random")
+    # Generate random samples
+    samples_coords = get_random_samples(ref_image, num_snow, method=SAMPLING_METHOD)
 
     # Concatenate images
     test = cv.resize(hsv, (0, 0), fx=0.4, fy=0.4)
@@ -138,16 +162,28 @@ def generate_snow(ref_image, mask=False):
     # Shape and size of snow particles
     snow_mask = np.zeros_like(hsv)
     centre_type = np.random.randint(0, 8 + 1)  # Define the centre type
-    speed = np.random.randint(1, 6 + 1)  # Define the speed of the snow particles
+    speed = np.random.randint(
+        SPEED_RANGE[0], SPEED_RANGE[1] + 1
+    )  # Define the speed of the snow particles
     for x, y in samples_coords:
         # Color of snow particles
         val = np.array(
-            [hsv[y, x, 0], np.random.randint(0, 80), np.random.randint(50, 255)]
+            [
+                hsv[y, x, 0],
+                np.random.randint(SATURATION_RANGE[0], SATURATION_RANGE[1]),
+                np.random.randint(VALUE_RANGE[0], VALUE_RANGE[1]),
+            ]
         )
 
         # val[2] < 1.2 * median_blur[y, x, 1] and val[2] < 1.2 * median_blur[y, x, 2]
-        if (median_blur[y, x, 1] < 50 and median_blur[y, x, 2] > 240) or (
-            (sigma[y, x, 1] > 5 or sigma[y, x, 2] > 5)
+        if (
+            median_blur[y, x, 1] < MEDIAN_BLUR_SATURATION_THRESH
+            and median_blur[y, x, 2] > MEDIAN_BLUR_VALUE_THRESH
+        ) or (
+            (
+                sigma[y, x, 1] > SIGMA_SATURATION_THRESH
+                or sigma[y, x, 2] > SIGMA_VALUE_THRESH
+            )
         ):
             s_thresh = (hsv[:, :, 1] < 50).astype(np.uint8)
             v_thresh = (hsv[:, :, 2] > 240).astype(np.uint8)
@@ -162,20 +198,27 @@ def generate_snow(ref_image, mask=False):
 
         # Get direction along which we stretch the marine snow particle
         stretch_direction = get_motion_direction(
-            ref_image, centre_type, x, y, noise_var=0.2 / speed
+            ref_image,
+            centre_type,
+            x,
+            y,
+            noise_var=MOTION_DIRECTION_NOISE_VAR_MAX / speed,
         )
         width_direction = np.array([-stretch_direction[1], stretch_direction[0]])
 
         # Determine the stretch size using a beta distribution (higher probability of smaller sizes)
-        size_limits = (1, 30)
         stretch_size = np.random.beta(2, 6 // speed, 1)[0]
         stretch_size = (
-            (size_limits[1] - size_limits[0]) * stretch_size + size_limits[0]
+            (STRETCH_SIZE_RANGE[1] - STRETCH_SIZE_RANGE[0]) * stretch_size
+            + STRETCH_SIZE_RANGE[0]
         ).astype(int)
         # Determine the width size using a beta distribution based on the stretch size
-        width_size = np.random.beta(2, speed * 2 * size_limits[1] // stretch_size, 1)[0]
+        width_size = np.random.beta(
+            2, speed * 2 * STRETCH_SIZE_RANGE[1] // stretch_size, 1
+        )[0]
         width_size = (
-            (size_limits[1] / 2 - size_limits[0] / 2) * width_size + size_limits[0] / 2
+            (WIDTH_SIZE_RANGE[1] - WIDTH_SIZE_RANGE[0]) * width_size
+            + WIDTH_SIZE_RANGE[0]
         ).astype(int)
 
         # Stretch the pixel along the stretch direction and width direction and add noise to the value-component
@@ -187,7 +230,9 @@ def generate_snow(ref_image, mask=False):
                 new_pixel = (new_pixel + j * width_direction).astype(int)
                 if in_bounds(ref_image.shape, new_pixel[0], new_pixel[1]):
                     # Add noise to the pixel value based on the previous pixel value
-                    new_val[2:] = new_val[2:] + np.random.normal(0, 20, 1)
+                    new_val[2] = new_val[2] + np.random.normal(
+                        0, SNOW_PATCH_VALUE_NOISE, 1
+                    )
                     snow_mask[new_pixel[1], new_pixel[0], :] = np.clip(new_val, 0, 255)
 
     # Dilate the pixels with an elliptical kernel inversely proportional to the speed
@@ -205,7 +250,9 @@ def generate_snow(ref_image, mask=False):
     snow_mask = cv.cvtColor(snow_mask, cv.COLOR_HSV2BGR)
 
     # Overlay snow mask with original image
-    overlay_percentage = (background_val / 255) * (0.4 - 0.1) + 0.1
+    overlay_percentage = (background_val / 255) * (
+        OVERLAY_PERCENTAGE_RANGE[1] - OVERLAY_PERCENTAGE_RANGE[0]
+    ) + OVERLAY_PERCENTAGE_RANGE[0]
     out_image = cv.addWeighted(ref_image, 1, snow_mask, overlay_percentage, 0)
 
     # non_zero_mask = snow_mask[:, :, 2] != 0
