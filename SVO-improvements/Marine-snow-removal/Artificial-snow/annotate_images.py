@@ -6,7 +6,7 @@ import os
 from generate_snow import generate_snow
 
 
-def annotate_images(input_folder, image_folder, mask_folder, start_index=0):
+def annotate_images(input_folder, image_folder, mask_folder, start_index=0, skip_num=0):
     # Load all images
     images = [cv.imread(file) for file in glob.glob(input_folder + "/*")]
 
@@ -16,6 +16,9 @@ def annotate_images(input_folder, image_folder, mask_folder, start_index=0):
 
     # Iterate through all images
     for i, image in tqdm(enumerate(images)):
+        if i % (skip_num + 1) != 0:
+            continue
+
         snow_image, snow_mask = generate_snow(image, mask=True)
 
         cv.imwrite(image_folder + f"/image_{(start_index + i)}.png", snow_image)
