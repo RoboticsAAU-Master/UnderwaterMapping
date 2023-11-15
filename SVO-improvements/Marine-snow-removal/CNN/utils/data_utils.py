@@ -6,7 +6,7 @@ import splitfolders
 from matplotlib import pyplot as plt
 
 
-def trainDataGenerator(
+def dataGenerator(
     batch_size,
     train_path,
     image_folder,
@@ -29,6 +29,9 @@ def trainDataGenerator(
         save_prefix="image",
         seed=1,
     )
+    # Modify the aug_dict for mask, since we must not change brightness
+    # aug_dict["brightness_range"] = None
+
     # mask generator function for corresponding ground truth
     mask_datagen = ImageDataGenerator(**aug_dict)
     mask_generator = mask_datagen.flow_from_directory(

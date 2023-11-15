@@ -17,21 +17,22 @@ from utils.data_utils import *
 
 # Directory for dataset
 train_dir = "data/train/"
+val_dir = "data/val/"
 
 # ckpt directory
 ckpt_base_dir = "ckpt/original/"
 ckpt_custom_dir = "ckpt/custom/"
-base_ = "VGG"  # or 'RSB'
+base_ = "RSB"  # or 'RSB'
 
 # Define model which will be loaded
 if base_ == "RSB":
     im_res_ = (320, 240, 3)
-    ckpt_name_base = "suimnet_rsb5.hdf5"
-    ckpt_name_custom = "custom_suimnet_rsb5.hdf5"
+    ckpt_name_base = "suimnet_rsb.hdf5"
+    ckpt_name_custom = "custom_suimnet_rsb.hdf5"
 else:
     im_res_ = (320, 256, 3)
-    ckpt_name_base = "suimnet_vgg5.hdf5"
-    ckpt_name_custom = "custom_suimnet_vgg5.hdf5"
+    ckpt_name_base = "suimnet_vgg.hdf5"
+    ckpt_name_custom = "custom_suimnet_vgg.hdf5"
 
 base_model_path = join(ckpt_base_dir, ckpt_name_base)
 custom_model_path = join(ckpt_custom_dir, ckpt_name_custom)
@@ -95,10 +96,11 @@ num_epochs = 50
 # Setup data augmentation parameters. Consider adding shear, contrast, etc.
 data_gen_args = dict(
     rotation_range=0.2,
-    width_shift_range=0.05,
-    height_shift_range=0.05,
+    # width_shift_range=0.05,
+    # height_shift_range=0.05,
     shear_range=0.05,
     zoom_range=0.05,
+    # brightness_range=[0.5, 1],
     horizontal_flip=True,
     fill_mode="nearest",
 )
@@ -116,7 +118,7 @@ model_checkpoint = callbacks.ModelCheckpoint(
 early_stop_callback = callbacks.EarlyStopping(monitor="loss", patience=3)
 
 # Create data generator, which gives tuples of images and masks
-train_gen = trainDataGenerator(
+train_gen = dataGenerator(
     batch_size,  # batch_size
     train_dir,  # train-data dir
     "images",  # image_folder
@@ -127,6 +129,41 @@ train_gen = trainDataGenerator(
     target_size=(im_res_[1], im_res_[0]),
 )
 
+val_gen = dataGenerator(
+    batch_size,  # batch_size
+    val_dir,  # train-data dir
+    "images",  # image_folder
+    "masks",  # mask_folder
+    data_gen_args,  # aug_dict
+    image_color_mode="rgb",
+    mask_color_mode="rgb",
+    target_size=(im_res_[1], im_res_[0]),
+)
+
+# Get a batch of images and masks from the generator (for visualisation)
+image_batch, mask_batch = next(train_gen)
+
+# Create subplots
+fig, axs = plt.subplots(2, 4, figsize=(12, 6))
+
+for i in range(4):
+    # Display the original image
+    axs[0, i].imshow(
+        image_batch[i].squeeze(), cmap="gray"
+    )  # Assuming images are grayscale
+    axs[0, i].set_title(f"Image {i+1}")
+    axs[0, i].axis("off")
+
+for i in range(4):
+    # Display the corresponding mask
+    axs[1, i].imshow(
+        mask_batch[i].squeeze(), cmap="gray"
+    )  # Assuming masks are grayscale
+    axs[1, i].set_title(f"Mask {i+1}")
+    axs[1, i].axis("off")
+
+plt.tight_layout()
+plt.show()
 
 # Train the model
 custom_model.fit_generator(
@@ -134,4 +171,6 @@ custom_model.fit_generator(
     steps_per_epoch=100,
     epochs=num_epochs,
     callbacks=[early_stop_callback, model_checkpoint],
+    validation_data=val_gen,
+    validation_steps=10,
 )

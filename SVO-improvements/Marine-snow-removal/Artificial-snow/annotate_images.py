@@ -27,8 +27,9 @@ def annotate_images(input_folder, image_folder, mask_folder, start_index=0, skip
 
 if __name__ == "__main__":
     annotate_images(
-        "Artificial-snow/Input",
-        "Artificial-snow/images",
-        "Artificial-snow/masks",
-        start_index=0,
+        r"C:\Users\danie\Downloads\dataset2",
+        r"C:\Users\danie\Downloads\dataset\images",
+        r"C:\Users\danie\Downloads\dataset\masks",
+        start_index=9970,
+        skip_num=0,
     )
