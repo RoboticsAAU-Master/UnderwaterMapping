@@ -1,6 +1,7 @@
 import os
 import random
 import shutil
+from tqdm import tqdm
 
 original_folder = "E:\CNN\Artificial\images"
 ground_truth_folder = "E:\CNN\Artificial\masks"
@@ -31,13 +32,21 @@ train_numbers = original_numbers[:train_size]
 val_numbers = original_numbers[train_size : train_size + val_size]
 test_numbers = original_numbers[train_size + val_size :]
 
+# Check if the data folder exists
+if os.path.exists(output_folder):
+    # Check if the folder is empty
+    if os.listdir(output_folder):
+        raise Exception(f"Folder '{output_folder}' exists but is not empty")
+else:
+    os.makedirs(output_folder)
+
 # Create folders for training, validation, and testing sets in the output directory
 for folder in ["train", "val", "test"]:
     os.makedirs(os.path.join(output_folder, folder, "images"), exist_ok=True)
     os.makedirs(os.path.join(output_folder, folder, "masks"), exist_ok=True)
 
 # Copy corresponding files to the respective folders
-for number in train_numbers:
+for number in tqdm(train_numbers):
     original_filename = f"image_{number}.png"
     ground_truth_filename = f"mask_{number}.png"
 
@@ -50,7 +59,7 @@ for number in train_numbers:
         os.path.join(output_folder, "train", "masks", ground_truth_filename),
     )
 
-for number in val_numbers:
+for number in tqdm(val_numbers):
     original_filename = f"image_{number}.png"
     ground_truth_filename = f"mask_{number}.png"
 
@@ -63,7 +72,7 @@ for number in val_numbers:
         os.path.join(output_folder, "val", "masks", ground_truth_filename),
     )
 
-for number in test_numbers:
+for number in tqdm(test_numbers):
     original_filename = f"image_{number}.png"
     ground_truth_filename = f"mask_{number}.png"
 

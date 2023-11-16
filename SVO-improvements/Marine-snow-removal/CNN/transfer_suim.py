@@ -24,7 +24,7 @@ ckpt_base_dir = "ckpt/original/"
 ckpt_custom_dir = "ckpt/custom/"
 base_ = "RSB"  # or 'RSB'
 
-# Define model which will be loaded
+# Define name for model which will be loaded and the name for model that is stored 
 if base_ == "RSB":
     im_res_ = (320, 240, 3)
     ckpt_name_base = "suimnet_rsb.hdf5"
@@ -93,7 +93,7 @@ print(custom_model.summary())
 batch_size = 8
 num_epochs = 50
 
-# Setup data augmentation parameters. Consider adding shear, contrast, etc.
+# Setup data augmentation parameters.
 data_gen_args = dict(
     rotation_range=0.2,
     # width_shift_range=0.05,
