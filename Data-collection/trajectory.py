@@ -162,6 +162,11 @@ class Trajectory3D:
         ax.set_xlim3d(min(self.x), max(self.x))
         ax.set_ylim3d(min(self.y), max(self.y))
         ax.set_zlim3d(min(self.z), max(self.z))
+        smallest_range = min(
+            max(self.x) - min(self.x),
+            max(self.y) - min(self.y),
+            max(self.z) - min(self.z),
+        )
 
         # Convert the euler angles to direction vectors (x-direction in rotation matrix)
         direction_vectors = self._euler_to_rotation_matrix()[:, :, 0]
@@ -203,7 +208,7 @@ class Trajectory3D:
                     self.y[i] + direction_vectors[i, 1],
                     self.z[i] + direction_vectors[i, 2],
                     color="red",
-                    length=0.1,
+                    length=0.1 * smallest_range,
                 )
 
                 plt.show()
@@ -220,7 +225,7 @@ class Trajectory3D:
                 self.y + direction_vectors[:, 1],
                 self.z + direction_vectors[:, 2],
                 color="red",
-                length=0.1,
+                length=0.1 * smallest_range,
             )
 
             plt.show()
@@ -232,7 +237,7 @@ if __name__ == "__main__":
 
     # Load the trajectory data
     trajectory.load_trajectory(
-        csv_file="Data-collection/log_2023_11_10_16_14_15_4840_Sample.csv",
+        csv_file="Data-collection/log_2023_11_10_16_12_03_9057_Sample.csv",
         delimiter=";",
         drop_columns=["Email", "Framecount"],
         pose_columns=[
@@ -255,7 +260,7 @@ if __name__ == "__main__":
     print("Trajectory time: " + str(trajectory_time) + " seconds")
 
     # Plot the trajectory
-    trajectory.plot(simulate=False, update_time=0.1)
+    trajectory.plot(simulate=True, update_time=0.1)
 
     # Output trajectory as txt file
     trajectory.output_as_txt("Data-collection/trajectory.txt")
