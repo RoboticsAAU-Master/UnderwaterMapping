@@ -58,6 +58,14 @@ original_model.load_weights(base_model_path)
 # Freeze the weights of the original model, as we will only train the custom top layer
 original_model.trainable = False
 
+# Based on trial-and-error, training only the classifier for suimnet RSB gives poor results. Therefore, we include additional top layers (classifier + dec3)
+if base_ == "RSB":
+    # Set dec3 block to trainable
+    original_model.layers[-2].trainable = True
+    original_model.layers[-3].trainable = True
+    original_model.layers[-4].trainable = True
+    original_model.layers[-5].trainable = True
+
 # Number of classes for the custom top layer
 n_classes = 1  # Marine snow (Everything else besides this class is background)
 
