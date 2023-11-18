@@ -5,6 +5,7 @@ import ntpath
 from PIL import Image
 from keras.models import Model
 from keras.layers import Conv2D
+import cv2 as cv
 
 # Local libs
 from models.suim_net import SUIM_Net
@@ -35,8 +36,6 @@ else:
 im_h, im_w = im_res_[1], im_res_[0]
 
 original_suimnet = SUIM_Net(base=base_, im_res=im_res_, n_classes=5)
-
-original_model = original_suimnet.model
 
 # Get the model
 original_model = original_suimnet.model
@@ -90,5 +89,37 @@ def testGenerator():
         Image.fromarray(np.uint8(MSs * 255.0)).save(MS_dir + img_name)
 
 
+def videoTestGenerator(path_to_video):
+    cap = cv.VideoCapture(path_to_video)
+
+    skip = 0
+    while cap.isOpened():
+        ret, frame = cap.read()
+        if not ret:
+            break
+
+        skip += 1
+        if skip % 4 != 0:
+            continue
+
+        frame = cv.resize(frame, (im_w, im_h))
+        img = np.array(frame) / 255.0
+        img = np.expand_dims(img, axis=0)
+        # inference
+        out_img = custom_model.predict(img)
+        # thresholding
+        out_img[out_img > threshold] = 255
+        out_img[out_img <= threshold] = 0
+        out_img = np.uint8(out_img)
+
+        out_img_color = cv.cvtColor(out_img[0, :, :, 0], cv.COLOR_GRAY2BGR)
+
+        concat = cv.hconcat([frame, out_img_color])
+        cv.imshow("frame", concat)
+        cv.waitKey(0)
+
+
 # test images
-testGenerator()
+if __name__ == "__main__":
+    # testGenerator()
+    videoTestGenerator("Grass.mp4")
