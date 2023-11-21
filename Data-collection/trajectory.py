@@ -171,27 +171,25 @@ class Trajectory3D:
         # Convert the euler angles to direction vectors (x-direction in rotation matrix)
         direction_vectors = self._euler_to_rotation_matrix()[:, :, 0]
 
-        # Plot the trajectory simulated in real time
-        if simulate:
-            # Calculate the number of samples to skip between updates
-            if update_time is None:
-                skip_num = 0
-            else:
-                if update_time < (
-                    self.timestamps_seconds[1] - self.timestamps_seconds[0]
-                ):
-                    raise ValueError(
-                        "The update frequency cannot be greater than the sampling frequency"
-                    )
-
-                skip_num = (
-                    int(
-                        update_time
-                        / (self.timestamps_seconds[1] - self.timestamps_seconds[0])
-                    )
-                    - 1
+        # Calculate the number of samples to skip between updates
+        if update_time is None:
+            skip_num = 0
+        else:
+            if update_time < (self.timestamps_seconds[1] - self.timestamps_seconds[0]):
+                raise ValueError(
+                    "The update frequency cannot be greater than the sampling frequency"
                 )
 
+            skip_num = (
+                int(
+                    update_time
+                    / (self.timestamps_seconds[1] - self.timestamps_seconds[0])
+                )
+                - 1
+            )
+
+        # Plot the trajectory simulated in real time
+        if simulate:
             # Simulate the trajectory
             plt.ion()
             t_prev = -1e-6
@@ -216,14 +214,19 @@ class Trajectory3D:
                 t_prev = t
         # Plot the entire final trajectory
         else:
-            ax.plot(self.x, self.y, self.z, "bo")
+            ax.plot(
+                self.x[:: (skip_num + 1)],
+                self.y[:: (skip_num + 1)],
+                self.z[:: (skip_num + 1)],
+                "bo",
+            )
             ax.quiver(
-                self.x,
-                self.y,
-                self.z,
-                self.x + direction_vectors[:, 0],
-                self.y + direction_vectors[:, 1],
-                self.z + direction_vectors[:, 2],
+                self.x[:: (skip_num + 1)],
+                self.y[:: (skip_num + 1)],
+                self.z[:: (skip_num + 1)],
+                self.x[:: (skip_num + 1)] + direction_vectors[:: (skip_num + 1), 0],
+                self.y[:: (skip_num + 1)] + direction_vectors[:: (skip_num + 1), 1],
+                self.z[:: (skip_num + 1)] + direction_vectors[:: (skip_num + 1), 2],
                 color="red",
                 length=0.1 * smallest_range,
             )
@@ -260,7 +263,7 @@ if __name__ == "__main__":
     print("Trajectory time: " + str(trajectory_time) + " seconds")
 
     # Plot the trajectory
-    trajectory.plot(simulate=True, update_time=0.1)
+    trajectory.plot(simulate=False, update_time=2)
 
     # Output trajectory as txt file
-    trajectory.output_as_txt("Data-collection/trajectory.txt")
+    # trajectory.output_as_txt("Data-collection/trajectory.txt")
