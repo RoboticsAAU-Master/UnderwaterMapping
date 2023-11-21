@@ -2,14 +2,14 @@ from syncstart import file_offset
 from datetime import datetime, timedelta
 import os
 
-# Parameters
-video1_input = "GX010003.MP4"  # Specify path with "/" or "\\" not "\"
-video2_input = "GX010510.MP4"
-video1_output = "Utilities/GoPro-synchronise-audio/Output/GoPro1_Clap_Cut.MP4"
-video2_output = "Utilities/GoPro-synchronise-audio/Output/GoPro2_Clap_Cut.MP4"
-offset_output = "Utilities/GoPro-synchronise-audio/Output/Kridtgraven-20-09-23.txt"
-start_time = "00:00:14.000"  # HH:MM:SS.mmm
-duration = "00:00:04.000"  # HH:MM:SS.mmm
+# Parameters (video2_input should be the video that is cut)
+video1_input = "RightCalib_UW_3.MP4"  # Specify path with "/" or "\\" not "\"
+video2_input = "LeftCalib_UW_3.MP4"
+video1_output = "Utilities/GoPro-synchronise-audio/Output/RightCalib_UW_3_Cut.MP4"
+video2_output = "Utilities/GoPro-synchronise-audio/Output/LeftCalib_UW_3_Cut.MP4"
+offset_output = "Utilities/GoPro-synchronise-audio/Output/Calib_UW_offset.text"
+start_time = "00:00:07.000"  # HH:MM:SS.mmm
+end_time = "00:01:00.000"  # HH:MM:SS.mmm
 
 
 def get_offset(video1, video2, output_file=None):
@@ -46,15 +46,15 @@ if __name__ == "__main__":
 
     # Crop video1
     os.system(
-        f'ffmpeg -i "{video1_input}" -ss {start_time} -t {duration} -c copy -map_metadata 0 "{video1_output}" -y'
+        f'ffmpeg -i "{video1_input}" -ss {start_time} -to {end_time} -map_metadata 0 -map 0:u -c copy "{video1_output}" -y'
     )
 
     # Crop video2
     start_time_dt = datetime.strptime(start_time, "%H:%M:%S.%f")  # Convert to datetime
     start_time_dt += timedelta(
-        seconds=offset
+        seconds=-offset
     )  # Add offset to start time (offset is negative if video2 is ahead of video1)
     start_time = start_time_dt.strftime("%H:%M:%S.%f")  # Convert back to string
     os.system(
-        f'ffmpeg -i "{video2_input}" -ss {start_time} -t {duration} -c copy -map_metadata 0 "{video2_output}" -y'
+        f'ffmpeg -i "{video2_input}" -ss {start_time} -to {end_time} -map_metadata 0 -map 0:u -c copy "{video2_output}" -y'
     )
