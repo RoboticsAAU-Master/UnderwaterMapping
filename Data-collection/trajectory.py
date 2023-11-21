@@ -72,10 +72,14 @@ class Trajectory3D:
             timestamp_column + "_seconds"
         ].to_numpy()
 
-    def remove_initial_offset(self):
-        # Remove the initial offset from the trajectory
-        self.position = self.position - self.position[0, :]
-        self.orientation = self.orientation - self.orientation[0, :]
+    def remove_initial_transformation(self):
+        # Rotation matrix and translation offset of the controller w.r.t. the world frame
+        R = self._euler_to_rotation_matrix()[0, :, :]
+        t = self.position[0, :].T.reshape(3, 1)
+
+        # Change the coordinate from the world frame to the controller frame
+        self.position = (R.T @ (self.position.T - t)).T
+        self.orientation = (R.T @ self.orientation.T).T
 
     def convert_degree_to_rad(self):
         if self.orientation_type != OrientationType.EULER:
@@ -85,37 +89,35 @@ class Trajectory3D:
         # Convert the rotation values to radians
         self.orientation = np.deg2rad(self.orientation)
 
-    def convert_orientation(
-        self,
-        start_orientation_type: OrientationType,
-        end_orientation_type: OrientationType,
-    ):
-        if start_orientation_type == end_orientation_type:
+    def convert_orientation(self, new_orientation_type: OrientationType):
+        if self.orientation_type == new_orientation_type:
             return
 
-        match start_orientation_type:
+        match self.orientation_type:
             case OrientationType.EULER:
-                if end_orientation_type == OrientationType.ROTATION_MATRIX:
+                if new_orientation_type == OrientationType.ROTATION_MATRIX:
                     self.orientation = (
                         self._euler_to_rotation_matrix()
                         .T.flatten()
                         .reshape(len(self.orientation), 9)
                     )
-                elif end_orientation_type == OrientationType.QUATERNION:
+                elif new_orientation_type == OrientationType.QUATERNION:
                     self.orientation = self._euler_to_quaternions().reshape(
                         len(self.orientation), 4
                     )
             # TODO: Add the other cases
             # case OrientationType.ROTATION_MATRIX:
-            #     if end_orientation_type == OrientationType.EULER:
+            #     if new_orientation_type == OrientationType.EULER:
             #         self.orientation = self._rotation_matrix_to_euler()
-            #     elif end_orientation_type == OrientationType.QUATERNION:
+            #     elif new_orientation_type == OrientationType.QUATERNION:
             #         self.orientation = self._rotation_matrix_to_quaternions()
             # case OrientationType.QUATERNION:
-            #     if end_orientation_type == OrientationType.EULER:
+            #     if new_orientation_type == OrientationType.EULER:
             #         self.orientation = self._quaternions_to_euler()
-            #     elif end_orientation_type == OrientationType.ROTATION_MATRIX:
+            #     elif new_orientation_type == OrientationType.ROTATION_MATRIX:
             #         self.orientation = self._quaternions_to_rotation_matrix()
+
+        self.orientation_type = new_orientation_type
 
     def _get_trajectory(self):
         return (
@@ -128,16 +130,16 @@ class Trajectory3D:
 
     def _euler_to_rotation_matrix(self):
         # Convert the euler angles to rotation matrix
-        rotation_matrix = np.zeros((len(self.orientation), 3, 3))
+        rotation_matrices = np.zeros((len(self.orientation), 3, 3))
         for i in range(len(self.orientation)):
-            rotation_matrix[i] = t3d.euler.euler2mat(
+            rotation_matrices[i] = t3d.euler.euler2mat(
                 self.orientation[i, 0],
                 self.orientation[i, 1],
                 self.orientation[i, 2],
                 "sxyz",
             )
 
-        return rotation_matrix
+        return rotation_matrices
 
     def _euler_to_quaternions(self):
         # Convert the euler angles to quaternions
@@ -275,7 +277,7 @@ if __name__ == "__main__":
 
     # Load the trajectory data
     trajectory.load_trajectory(
-        csv_file="Data-collection/log_2023_11_10_16_12_03_9057_Sample.csv",
+        csv_file="Data-collection/1,1_0_0_1.csv",
         delimiter=";",
         drop_columns=["Email", "Framecount"],
         pose_columns=[
@@ -290,15 +292,16 @@ if __name__ == "__main__":
     )
 
     # Remove the initial offset from the trajectory
-    trajectory.remove_initial_offset()
     trajectory.convert_degree_to_rad()
+    trajectory.remove_initial_transformation()
 
     # Print the trajectory time
     trajectory_time = trajectory._get_trajectory_time_seconds()
     print("Trajectory time: " + str(trajectory_time) + " seconds")
 
     # Plot the trajectory
-    trajectory.plot(simulate=False, update_time=2)
+    trajectory.plot(simulate=True, update_time=1)
 
-    # Output trajectory as txt file
-    trajectory.output_as_txt("Data-collection/trajectory.txt")
+    # Output converted trajectory as txt file
+    # trajectory.convert_orientation(new_orientation_type=OrientationType.QUATERNION)
+    # trajectory.output_as_txt("Data-collection/trajectory.txt")
