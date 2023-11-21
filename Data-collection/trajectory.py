@@ -6,6 +6,12 @@ import transforms3d as t3d
 from enum import Enum
 
 
+class OrientationType(Enum):
+    EULER = 0
+    ROTATION_MATRIX = 1
+    QUATERNION = 2
+
+
 class DataLoader:
     def __init__(self, csv_file, delimiter) -> None:
         self.delimiter = delimiter
@@ -36,13 +42,16 @@ class DataLoader:
 
 
 class Trajectory3D:
-    def __init__(self) -> None:
-        self.x = []
-        self.y = []
-        self.z = []
-        self.rot_x = []
-        self.rot_y = []
-        self.rot_z = []
+    def __init__(self, orientation_type: OrientationType) -> None:
+        self.position = np.empty([3], dtype=np.float32)
+        if orientation_type == OrientationType.EULER:
+            self.orientation = np.empty([3], dtype=np.float32)
+        elif orientation_type == OrientationType.ROTATION_MATRIX:
+            self.orientation = np.empty([9], dtype=np.float32)
+        elif orientation_type == OrientationType.QUATERNION:
+            self.orientation = np.empty([4], dtype=np.float32)
+        self.orientation_type = orientation_type
+
         self.timestamps_seconds = []
         self.data_loader = None
 
@@ -56,90 +65,121 @@ class Trajectory3D:
         self.data_loader.datetime_to_seconds(timestamp_column)
 
         # Save the trajectory data
-        self.x = self.data_loader.df[pose_columns[0]].to_numpy()
-        self.y = self.data_loader.df[pose_columns[1]].to_numpy()
-        self.z = self.data_loader.df[pose_columns[2]].to_numpy()
-        self.rot_x = self.data_loader.df[pose_columns[3]].to_numpy()
-        self.rot_y = self.data_loader.df[pose_columns[4]].to_numpy()
-        self.rot_z = self.data_loader.df[pose_columns[5]].to_numpy()
+        self.position = self.data_loader.df[pose_columns[0:3]].to_numpy()
+        self.orientation = self.data_loader.df[pose_columns[3:]].to_numpy()
+
         self.timestamps_seconds = self.data_loader.df[
             timestamp_column + "_seconds"
         ].to_numpy()
 
     def remove_initial_offset(self):
         # Remove the initial offset from the trajectory
-        self.x = self.x - self.x[0]
-        self.y = self.y - self.y[0]
-        self.z = self.z - self.z[0]
-        self.rot_x = self.rot_x - self.rot_x[0]
-        self.rot_y = self.rot_y - self.rot_y[0]
-        self.rot_z = self.rot_z - self.rot_z[0]
+        self.position = self.position - self.position[0, :]
+        self.orientation = self.orientation - self.orientation[0, :]
 
-    def convert_rotation_to_rad(self):
+    def convert_degree_to_rad(self):
+        if self.orientation_type != OrientationType.EULER:
+            raise ValueError(
+                "The orientation type must be Euler angles to convert to radians"
+            )
         # Convert the rotation values to radians
-        self.rot_x = np.deg2rad(self.rot_x)
-        self.rot_y = np.deg2rad(self.rot_y)
-        self.rot_z = np.deg2rad(self.rot_z)
+        self.orientation = np.deg2rad(self.orientation)
 
-    class OrientationType(Enum):
-        EULER = 0
-        ROTATION_MATRIX = 1
-        QUATERNION = 2
+    def convert_orientation(
+        self,
+        start_orientation_type: OrientationType,
+        end_orientation_type: OrientationType,
+    ):
+        if start_orientation_type == end_orientation_type:
+            return
 
-    def _get_trajectory(self, orientation_type=OrientationType.EULER):
-        match orientation_type:
-            case Trajectory3D.OrientationType.EULER:  # rx, ry, rz
-                orientation = np.array([self.rot_x, self.rot_y, self.rot_z]).reshape(
-                    len(self.rot_x), 3
-                )
-            case Trajectory3D.OrientationType.ROTATION_MATRIX:  # rx1, rx2, rx3, ry1, ry2, ry3, rz1, rz2, rz3
-                orientation = (
-                    self._euler_to_rotation_matrix()
-                    .T.flatten()
-                    .reshape(len(self.rot_x), 9)
-                )
-            case Trajectory3D.OrientationType.QUATERNION:  # qx, qy, qz, qw
-                orientation = self._euler_to_quaternions().reshape(len(self.rot_x), 4)
+        match start_orientation_type:
+            case OrientationType.EULER:
+                if end_orientation_type == OrientationType.ROTATION_MATRIX:
+                    self.orientation = (
+                        self._euler_to_rotation_matrix()
+                        .T.flatten()
+                        .reshape(len(self.orientation), 9)
+                    )
+                elif end_orientation_type == OrientationType.QUATERNION:
+                    self.orientation = self._euler_to_quaternions().reshape(
+                        len(self.orientation), 4
+                    )
+            # TODO: Add the other cases
+            # case OrientationType.ROTATION_MATRIX:
+            #     if end_orientation_type == OrientationType.EULER:
+            #         self.orientation = self._rotation_matrix_to_euler()
+            #     elif end_orientation_type == OrientationType.QUATERNION:
+            #         self.orientation = self._rotation_matrix_to_quaternions()
+            # case OrientationType.QUATERNION:
+            #     if end_orientation_type == OrientationType.EULER:
+            #         self.orientation = self._quaternions_to_euler()
+            #     elif end_orientation_type == OrientationType.ROTATION_MATRIX:
+            #         self.orientation = self._quaternions_to_rotation_matrix()
 
-        position = np.array([self.x, self.y, self.z]).reshape(len(self.x), 3)
-
-        return np.concatenate((position, orientation), axis=1)
+    def _get_trajectory(self):
+        return (
+            self.orientation_type,
+            np.concatenate((self.position, self.orientation), axis=1),
+        )
 
     def _get_trajectory_time_seconds(self):
         return self.timestamps_seconds[-1]
 
     def _euler_to_rotation_matrix(self):
         # Convert the euler angles to rotation matrix
-        rotation_matrix = np.zeros((len(self.rot_x), 3, 3))
-        for i in range(len(self.rot_x)):
+        rotation_matrix = np.zeros((len(self.orientation), 3, 3))
+        for i in range(len(self.orientation)):
             rotation_matrix[i] = t3d.euler.euler2mat(
-                self.rot_x[i], self.rot_y[i], self.rot_z[i], "sxyz"
+                self.orientation[i, 0],
+                self.orientation[i, 1],
+                self.orientation[i, 2],
+                "sxyz",
             )
 
         return rotation_matrix
 
     def _euler_to_quaternions(self):
         # Convert the euler angles to quaternions
-        quaternions = np.zeros((len(self.rot_x), 4))
-        for i in range(len(self.rot_x)):
+        quaternions = np.zeros((len(self.orientation), 4))
+        for i in range(len(self.orientation)):
             quaternions[i] = t3d.euler.euler2quat(
-                self.rot_x[i], self.rot_y[i], self.rot_z[i], "sxyz"
+                self.orientation[i, 0],
+                self.orientation[i, 1],
+                self.orientation[i, 2],
+                "sxyz",
             )
 
         return quaternions
 
     def output_as_txt(self, output_file):
-        # Convert the euler angles to quaternions
-        trajectory_quat = self._get_trajectory(
-            orientation_type=Trajectory3D.OrientationType.QUATERNION
-        )
-
         # Create a header row
-        header_row = ["timestamp", "tx", "ty", "tz", "qx", "qy", "qz", "qw"]
+        match self.orientation_type:
+            case OrientationType.EULER:
+                header_row = ["timestamp", "tx", "ty", "tz", "rx", "ry", "rz"]
+            case OrientationType.ROTATION_MATRIX:
+                header_row = [
+                    "timestamp",
+                    "tx",
+                    "ty",
+                    "tz",
+                    "r11",
+                    "r21",
+                    "r31",
+                    "r12",
+                    "r22",
+                    "r32",
+                    "r13",
+                    "r23",
+                    "r33",
+                ]
+            case OrientationType.QUATERNION:
+                header_row = ["timestamp", "tx", "ty", "tz", "qx", "qy", "qz", "qw"]
 
         # Save the trajectory data with reference in the header row
         trajectory_txt = np.concatenate(
-            (self.timestamps_seconds.reshape(-1, 1), trajectory_quat), axis=1
+            (self.timestamps_seconds.reshape(-1, 1), self.position, self.orientation),
+            axis=1,
         )
 
         # Add the header row to the trajectory data
@@ -159,13 +199,13 @@ class Trajectory3D:
         ax.set_zlabel("Z")
 
         # Set axis limits
-        ax.set_xlim3d(min(self.x), max(self.x))
-        ax.set_ylim3d(min(self.y), max(self.y))
-        ax.set_zlim3d(min(self.z), max(self.z))
+        ax.set_xlim3d(min(self.position[:, 0]), max(self.position[:, 0]))
+        ax.set_ylim3d(min(self.position[:, 1]), max(self.position[:, 1]))
+        ax.set_zlim3d(min(self.position[:, 2]), max(self.position[:, 2]))
         smallest_range = min(
-            max(self.x) - min(self.x),
-            max(self.y) - min(self.y),
-            max(self.z) - min(self.z),
+            max(self.position[:, 0]) - min(self.position[:, 0]),
+            max(self.position[:, 1]) - min(self.position[:, 1]),
+            max(self.position[:, 2]) - min(self.position[:, 2]),
         )
 
         # Convert the euler angles to direction vectors (x-direction in rotation matrix)
@@ -197,14 +237,10 @@ class Trajectory3D:
                 if i % (skip_num + 1) != 0:
                     continue
 
-                ax.plot(self.x[i], self.y[i], self.z[i], "bo")
+                ax.plot(*(self.position[i, :]), "bo")
                 ax.quiver(
-                    self.x[i],
-                    self.y[i],
-                    self.z[i],
-                    self.x[i] + direction_vectors[i, 0],
-                    self.y[i] + direction_vectors[i, 1],
-                    self.z[i] + direction_vectors[i, 2],
+                    *(self.position[i, :]),
+                    *(self.position[i, :] + direction_vectors[i, :]),
                     color="red",
                     length=0.1 * smallest_range,
                 )
@@ -215,18 +251,17 @@ class Trajectory3D:
         # Plot the entire final trajectory
         else:
             ax.plot(
-                self.x[:: (skip_num + 1)],
-                self.y[:: (skip_num + 1)],
-                self.z[:: (skip_num + 1)],
+                *(self.position[:: (skip_num + 1), :].T),
                 "bo",
             )
             ax.quiver(
-                self.x[:: (skip_num + 1)],
-                self.y[:: (skip_num + 1)],
-                self.z[:: (skip_num + 1)],
-                self.x[:: (skip_num + 1)] + direction_vectors[:: (skip_num + 1), 0],
-                self.y[:: (skip_num + 1)] + direction_vectors[:: (skip_num + 1), 1],
-                self.z[:: (skip_num + 1)] + direction_vectors[:: (skip_num + 1), 2],
+                *(self.position[:: (skip_num + 1), :].T),
+                *(
+                    (
+                        self.position[:: (skip_num + 1), :]
+                        + direction_vectors[:: (skip_num + 1), :]
+                    ).T
+                ),
                 color="red",
                 length=0.1 * smallest_range,
             )
@@ -236,7 +271,7 @@ class Trajectory3D:
 
 if __name__ == "__main__":
     # Create a trajectory object
-    trajectory = Trajectory3D()
+    trajectory = Trajectory3D(orientation_type=OrientationType.EULER)
 
     # Load the trajectory data
     trajectory.load_trajectory(
@@ -256,7 +291,7 @@ if __name__ == "__main__":
 
     # Remove the initial offset from the trajectory
     trajectory.remove_initial_offset()
-    trajectory.convert_rotation_to_rad()
+    trajectory.convert_degree_to_rad()
 
     # Print the trajectory time
     trajectory_time = trajectory._get_trajectory_time_seconds()
@@ -266,4 +301,4 @@ if __name__ == "__main__":
     trajectory.plot(simulate=False, update_time=2)
 
     # Output trajectory as txt file
-    # trajectory.output_as_txt("Data-collection/trajectory.txt")
+    trajectory.output_as_txt("Data-collection/trajectory.txt")
