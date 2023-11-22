@@ -166,7 +166,57 @@ class Trajectory3D:
         #     self.orientation = self._rotation_matrix_to_quaternions(new_orientation.T.flatten())
 
     def make_right_handed(self):
-        self.orientation[:, 2] = -self.orientation[:, 2]
+        temp_pos_y = self.position[:, 1].copy()
+        self.position[:, 1] = self.position[:, 2].copy()
+        self.position[:, 2] = temp_pos_y
+
+        def rotX(angles):
+            rotations = np.zeros((len(angles), 3, 3))
+            for i in range(len(angles)):
+                rotations[i] = np.array(
+                    [
+                        [1, 0, 0],
+                        [0, np.cos(angles[i]), -np.sin(angles[i])],
+                        [0, np.sin(angles[i]), np.cos(angles[i])],
+                    ]
+                )
+            return rotations
+
+        def rotY(angles):
+            rotations = np.zeros((len(angles), 3, 3))
+            for i in range(len(angles)):
+                rotations[i] = np.array(
+                    [
+                        [np.cos(angles[i]), 0, np.sin(angles[i])],
+                        [0, 1, 0],
+                        [-np.sin(angles[i]), 0, np.cos(angles[i])],
+                    ]
+                )
+            return rotations
+
+        def rotZ(angles):
+            rotations = np.zeros((len(angles), 3, 3))
+            for i in range(len(angles)):
+                rotations[i] = np.array(
+                    [
+                        [np.cos(angles[i]), -np.sin(angles[i]), 0],
+                        [np.sin(angles[i]), np.cos(angles[i]), 0],
+                        [0, 0, 1],
+                    ]
+                )
+            return rotations
+
+        RX = rotX(-self.orientation[:, 0])
+        RY = rotY(-self.orientation[:, 2])
+        RZ = rotZ(-self.orientation[:, 1])
+
+        R = RZ @ RX @ RY
+
+        self.orientation = OrientationConversion.convert(
+            R,
+            OrientationType.ROTATION_MATRIX,
+            self.orientation_type,
+        )
 
     def convert_degree_to_rad(self):
         if self.orientation_type != OrientationType.EULER:
