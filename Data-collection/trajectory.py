@@ -303,7 +303,7 @@ class Trajectory3D:
         # Save the trajectory data as a txt file
         np.savetxt(output_file, trajectory_txt, delimiter=" ", fmt="%s")
 
-    def plot(self, simulate=False, update_time=None):
+    def plot(self, simulate=False, update_time=None, orientation_axes=[1, 0, 0]):
         # Create a 3d figure
         fig = plt.figure()
         ax = fig.add_subplot(111, projection="3d")
@@ -332,7 +332,7 @@ class Trajectory3D:
         # Convert the euler angles to direction vectors (x-direction in rotation matrix)
         direction_vectors = OrientationConversion.convert(
             self.orientation, self.orientation_type, OrientationType.ROTATION_MATRIX
-        )[:, :, 1]
+        )
 
         # Calculate the number of samples to skip between updates
         if update_time is None:
@@ -352,6 +352,7 @@ class Trajectory3D:
             )
 
         # Plot the trajectory simulated in real time
+        axis_colors = ["red", "green", "blue"]
         if simulate:
             # Simulate the trajectory
             plt.ion()
@@ -359,35 +360,48 @@ class Trajectory3D:
             for i, t in enumerate(self.timestamps_seconds):
                 if i % (skip_num + 1) != 0:
                     continue
-
-                ax.plot(*(self.position[i, :]), "bo")
-                ax.quiver(
-                    *(self.position[i, :]),
-                    *(self.position[i, :] + direction_vectors[i, :]),
-                    color="red",
-                    length=0.1 * smallest_range,
-                )
+                
+                # Plot position
+                ax.plot(*(self.position[i, :]), "ko")
+                
+                # Plot orientation axes
+                for j, display_axis in enumerate(orientation_axes):
+                    if display_axis != 1:
+                        continue
+                    
+                    ax.quiver(
+                        *(self.position[i, :]),
+                        *((self.position[i, :] + direction_vectors[i, :, j])),
+                        color=axis_colors[j],
+                        length=0.1 * smallest_range,
+                    )
 
                 plt.show()
                 plt.pause(t - t_prev)
                 t_prev = t
         # Plot the entire final trajectory
         else:
+            # Plot position
             ax.plot(
                 *(self.position[:: (skip_num + 1), :].T),
-                "bo",
+                "ko",
             )
-            ax.quiver(
-                *(self.position[:: (skip_num + 1), :].T),
-                *(
-                    (
-                        self.position[:: (skip_num + 1), :]
-                        + direction_vectors[:: (skip_num + 1), :]
-                    ).T
-                ),
-                color="red",
-                length=0.1 * smallest_range,
-            )
+            # Plot orientation axes
+            for j, display_axis in enumerate(orientation_axes):
+                if display_axis != 1:
+                    continue
+
+                ax.quiver(
+                    *(self.position[:: (skip_num + 1), :].T),
+                    *(
+                        (
+                            self.position[:: (skip_num + 1), :]
+                            + direction_vectors[:: (skip_num + 1), :, j]
+                        ).T
+                    ),
+                    color=axis_colors[j],
+                    length=0.1 * smallest_range,
+                )
 
             plt.show()
 
@@ -398,7 +412,7 @@ if __name__ == "__main__":
 
     # Load the trajectory data
     trajectory.load_trajectory(
-        csv_file="Data-collection/rotx.csv",
+        csv_file="Data-collection/rotx_4pts.csv",
         delimiter=";",
         drop_columns=["Email", "Framecount"],
         pose_columns=[
@@ -424,7 +438,7 @@ if __name__ == "__main__":
     print("Trajectory time: " + str(trajectory_time) + " seconds")
 
     # Plot the trajectory
-    trajectory.plot(simulate=True, update_time=0.5)
+    trajectory.plot(simulate=True, update_time=0.5, orientation_axes=[1, 1, 1])
 
     # Output converted trajectory as txt file
     # trajectory.convert_orientation(new_orientation_type=OrientationType.QUATERNION)
