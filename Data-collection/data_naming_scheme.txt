@@ -23,5 +23,5 @@ marine_snow:
 trial: Integer representing specific test trial number [1,inf)
 
 Example:
-_1,1_0_0_1
+"_1,1_0_0_1.csv" corresponds to pretest of predefined test with rectangular motion and zero turbidity or marine snow for trial number 1
 
