@@ -12,6 +12,67 @@ class OrientationType(Enum):
     QUATERNION = 2
 
 
+class OrientationConversion:
+    def convert(orientations, start_orientation_type, end_orientation_type):
+        orientations = orientations.copy()
+
+        if orientations.ndim == 1:
+            orientations = orientations.reshape(1, -1)
+
+        if (
+            start_orientation_type == OrientationType.ROTATION_MATRIX
+            and orientations.ndim == 2
+        ):
+            orientations = OrientationConversion.rot_matrix_1d_2d(orientations)
+
+        if start_orientation_type == end_orientation_type:
+            return orientations
+
+        match start_orientation_type:
+            case OrientationType.EULER:
+                if end_orientation_type == OrientationType.ROTATION_MATRIX:
+                    # Convert the euler angles to rotation matrix
+                    rotation_matrices = np.zeros((len(orientations), 3, 3))
+                    for i in range(len(orientations)):
+                        rotation_matrices[i] = t3d.euler.euler2mat(
+                            *orientations[i, :],
+                            "sxyz",
+                        )
+                    return rotation_matrices
+                elif end_orientation_type == OrientationType.QUATERNION:
+                    # Convert the euler angles to quaternions
+                    quaternions = np.zeros((len(orientations), 4))
+                    for i in range(len(orientations)):
+                        quaternions[i] = t3d.euler.euler2quat(
+                            *orientations[i, :],
+                            "sxyz",
+                        )
+                    return quaternions
+            case OrientationType.ROTATION_MATRIX:
+                if end_orientation_type == OrientationType.EULER:
+                    # Convert the rotation matrices to euler angles
+                    euler_angles = np.zeros((len(orientations), 3))
+                    for i in range(len(orientations)):
+                        euler_angles[i] = t3d.euler.mat2euler(
+                            orientations[i, :, :], "sxyz"
+                        )
+                    return euler_angles
+                elif end_orientation_type == OrientationType.QUATERNION:
+                    # Convert the rotation matrices to quaternions
+                    quaternions = np.zeros((len(orientations), 4))
+                    for i in range(len(orientations)):
+                        quaternions[i] = t3d.quaternions.mat2quat(orientations[i, :, :])
+                    return quaternions
+
+    def rot_matrix_1d_2d(rotation_matrix):
+        return np.transpose(rotation_matrix.reshape(-1, 3, 3), axes=(0, 2, 1))
+
+    def rot_matrix_2d_1d(rotation_matrix):
+        return np.transpose(rotation_matrix.reshape(-1, 3, 3), axes=(0, 2, 1)).reshape(
+            -1, 9
+        )
+
+
 class DataLoader:
     def __init__(self, csv_file, delimiter) -> None:
         self.delimiter = delimiter
@@ -74,12 +135,38 @@ class Trajectory3D:
 
     def remove_initial_transformation(self):
         # Rotation matrix and translation offset of the controller w.r.t. the world frame
-        R = self._euler_to_rotation_matrix()[0, :, :]
         t = self.position[0, :].T.reshape(3, 1)
+        old_orientations = OrientationConversion.convert(
+            self.orientation,
+            self.orientation_type,
+            OrientationType.ROTATION_MATRIX,
+        )
+        R = old_orientations[0, :, :]
 
         # Change the coordinate from the world frame to the controller frame
         self.position = (R.T @ (self.position.T - t)).T
-        self.orientation = (R.T @ self.orientation.T).T
+        new_orientations = R.T @ old_orientations
+
+        # R_new = R * R_old
+        #
+
+        match self.orientation_type:
+            case OrientationType.EULER:
+                self.orientation = OrientationConversion.convert(
+                    new_orientations,
+                    OrientationType.ROTATION_MATRIX,
+                    OrientationType.EULER,
+                )
+            case OrientationType.ROTATION_MATRIX:
+                self.orientation = OrientationConversion.rot_matrix_2d_1d(
+                    new_orientations
+                )
+        # TODO: Add the other cases
+        # case OrientationType.QUATERNION:
+        #     self.orientation = self._rotation_matrix_to_quaternions(new_orientation.T.flatten())
+
+    def make_right_handed(self):
+        self.orientation[:, 2] = -self.orientation[:, 2]
 
     def convert_degree_to_rad(self):
         if self.orientation_type != OrientationType.EULER:
@@ -96,14 +183,16 @@ class Trajectory3D:
         match self.orientation_type:
             case OrientationType.EULER:
                 if new_orientation_type == OrientationType.ROTATION_MATRIX:
-                    self.orientation = (
-                        self._euler_to_rotation_matrix()
-                        .T.flatten()
-                        .reshape(len(self.orientation), 9)
+                    self.orientation = OrientationConversion.rot_matrix_2d_1d(
+                        OrientationConversion.convert(
+                            self.orientation,
+                            self.orientation_type,
+                            new_orientation_type,
+                        )
                     )
                 elif new_orientation_type == OrientationType.QUATERNION:
-                    self.orientation = self._euler_to_quaternions().reshape(
-                        len(self.orientation), 4
+                    self.orientation = OrientationConversion.convert(
+                        self.orientation, self.orientation_type, new_orientation_type
                     )
             # TODO: Add the other cases
             # case OrientationType.ROTATION_MATRIX:
@@ -127,32 +216,6 @@ class Trajectory3D:
 
     def _get_trajectory_time_seconds(self):
         return self.timestamps_seconds[-1]
-
-    def _euler_to_rotation_matrix(self):
-        # Convert the euler angles to rotation matrix
-        rotation_matrices = np.zeros((len(self.orientation), 3, 3))
-        for i in range(len(self.orientation)):
-            rotation_matrices[i] = t3d.euler.euler2mat(
-                self.orientation[i, 0],
-                self.orientation[i, 1],
-                self.orientation[i, 2],
-                "sxyz",
-            )
-
-        return rotation_matrices
-
-    def _euler_to_quaternions(self):
-        # Convert the euler angles to quaternions
-        quaternions = np.zeros((len(self.orientation), 4))
-        for i in range(len(self.orientation)):
-            quaternions[i] = t3d.euler.euler2quat(
-                self.orientation[i, 0],
-                self.orientation[i, 1],
-                self.orientation[i, 2],
-                "sxyz",
-            )
-
-        return quaternions
 
     def output_as_txt(self, output_file):
         # Create a header row
@@ -201,17 +264,25 @@ class Trajectory3D:
         ax.set_zlabel("Z")
 
         # Set axis limits
-        ax.set_xlim3d(min(self.position[:, 0]), max(self.position[:, 0]))
-        ax.set_ylim3d(min(self.position[:, 1]), max(self.position[:, 1]))
-        ax.set_zlim3d(min(self.position[:, 2]), max(self.position[:, 2]))
-        smallest_range = min(
-            max(self.position[:, 0]) - min(self.position[:, 0]),
-            max(self.position[:, 1]) - min(self.position[:, 1]),
-            max(self.position[:, 2]) - min(self.position[:, 2]),
-        )
+        # ax.set_xlim3d(min(self.position[:, 0]), max(self.position[:, 0]))
+        # ax.set_ylim3d(min(self.position[:, 1]), max(self.position[:, 1]))
+        # ax.set_zlim3d(min(self.position[:, 2]), max(self.position[:, 2]))
+        # smallest_range = (
+        #     min(
+        #         max(self.position[:, 0]) - min(self.position[:, 0]),
+        #         max(self.position[:, 1]) - min(self.position[:, 1]),
+        #         max(self.position[:, 2]) - min(self.position[:, 2]),
+        #     )
+        # )
+        ax.set_xlim3d(-0.5, 0.5)
+        ax.set_ylim3d(-0.5, 0.5)
+        ax.set_zlim3d(-0.5, 0.5)
+        smallest_range = 1
 
         # Convert the euler angles to direction vectors (x-direction in rotation matrix)
-        direction_vectors = self._euler_to_rotation_matrix()[:, :, 0]
+        direction_vectors = OrientationConversion.convert(
+            self.orientation, self.orientation_type, OrientationType.ROTATION_MATRIX
+        )[:, :, 1]
 
         # Calculate the number of samples to skip between updates
         if update_time is None:
@@ -277,7 +348,7 @@ if __name__ == "__main__":
 
     # Load the trajectory data
     trajectory.load_trajectory(
-        csv_file="Data-collection/1,1_0_0_1.csv",
+        csv_file="Data-collection/rotx.csv",
         delimiter=";",
         drop_columns=["Email", "Framecount"],
         pose_columns=[
@@ -293,14 +364,17 @@ if __name__ == "__main__":
 
     # Remove the initial offset from the trajectory
     trajectory.convert_degree_to_rad()
+    trajectory.make_right_handed()
     trajectory.remove_initial_transformation()
+
+    # trajectory.convert_orientation(new_orientation_type=OrientationType.ROTATION_MATRIX)
 
     # Print the trajectory time
     trajectory_time = trajectory._get_trajectory_time_seconds()
     print("Trajectory time: " + str(trajectory_time) + " seconds")
 
     # Plot the trajectory
-    trajectory.plot(simulate=True, update_time=1)
+    trajectory.plot(simulate=True, update_time=0.5)
 
     # Output converted trajectory as txt file
     # trajectory.convert_orientation(new_orientation_type=OrientationType.QUATERNION)
