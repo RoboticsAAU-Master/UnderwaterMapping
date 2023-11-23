@@ -1,0 +1,27 @@
+{prefix}{test_number},{testtype}_{turbidity_level}_{marine_snow}_{trial}
+
+prefix:
+	_ = pretest
+	  = actual test
+
+testnumber,testtype:
+	1,1 = predefined test, rectangular 
+	1,2 = predefined test, curved with orientation following path
+	1,3 = predefined test, curved with orientation swaying (actually just random rotation)
+	2,1 = feature loss, landmark track
+	2,2 = feature loss, camera angle tilt
+	
+turbidity_level: 
+	0 = None
+	1 = ratio 1/225
+	2 = ????
+
+marine_snow: 
+	0 = None
+	1 = Present
+
+trial: Integer representing specific test trial number [1,inf)
+
+Example:
+"_1,1_0_0_1.csv" corresponds to pretest of predefined test with rectangular motion and zero turbidity or marine snow for trial number 1
+
