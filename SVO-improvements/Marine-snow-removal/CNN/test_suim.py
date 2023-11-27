@@ -24,8 +24,8 @@ if not exists(samples_dir):
 if not exists(MS_dir):
     os.makedirs(MS_dir)
 
-## input/output shapes
-base_ = "RSB"  # or 'VGG'
+## input/output shapes and model name
+base_ = "VGG"  # or 'VGG'
 if base_ == "RSB":
     im_res_ = (320, 240, 3)
     ckpt_name = "custom_suimnet_rsb.hdf5"
@@ -64,7 +64,7 @@ custom_model = Model(
 custom_model.load_weights(join("ckpt/custom/", ckpt_name))
 
 # Threshold the output of the model
-threshold = 0.1
+threshold = 0.5
 
 
 def testGenerator():
