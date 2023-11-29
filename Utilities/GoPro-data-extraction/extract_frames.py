@@ -2,6 +2,7 @@ import cv2
 import os
 from tqdm import tqdm
 
+CAM_SAMPLE_RATE = 60.0
 TIME_START = 0.0
 TIME_END = 1000.0
 
@@ -24,8 +25,8 @@ def save_all_frames(
     for f in tqdm(range(int(cap.get(cv2.CAP_PROP_FRAME_COUNT)))):
         ret, frame = cap.read()
 
+        t += 1 / CAM_SAMPLE_RATE
         if t < TIME_START or t > TIME_END:
-            t += 1 / 60.0
             continue
 
         if ret:
