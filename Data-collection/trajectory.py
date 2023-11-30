@@ -321,7 +321,11 @@ class Trajectory3D:
         # Update the orientation type
         self.orientation_type = new_orientation_type
 
-    def apply_transformation(self, transform: np.ndarray((4, 4)), right_hand=True):
+    def apply_transformation(self, transform, right_hand=True):
+        # Check transform is valid
+        if transform.shape != (4, 4):
+            raise ValueError("The transformation must be a 4x4 matrix")
+
         # Store the old orientation and position
         old_orientations = OrientationConversion.convert(
             self.orientation,
@@ -495,7 +499,6 @@ class Trajectory3D:
                 if display_axis != 1:
                     continue
 
-                print(self.position[0, :] + direction_vectors[0, :, j])
                 ax.quiver(
                     *(self.position[:: (skip_num + 1), :].T),
                     *((direction_vectors[:: (skip_num + 1), :, j]).T),
@@ -549,6 +552,7 @@ if __name__ == "__main__":
         ],
     )
     trajectory.apply_transformation(T_ctrl_lcam, right_hand=True)
+    trajectory.plot(simulate=False, update_time=1000, orientation_axes=[1, 1, 1])
 
     # Crop the trajectory in time
     trajectory.crop_time(0, 10)
