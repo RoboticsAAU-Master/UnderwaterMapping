@@ -189,11 +189,8 @@ class Trajectory3D:
         if np.median(prev_window) > threshold:
             raise ValueError("The trajectory is not stationary at the beginning")
 
-        # Find the initial time of the trajectory
-        initial_time = self.timestamps_seconds[max_index]
-
         # Synchronise the initial time of the trajectory to 0
-        self.timestamps_seconds -= initial_time
+        self.timestamps_seconds -= self.timestamps_seconds[max_index]
 
         # Remove the times before the initial time
         self.timestamps_seconds = self.timestamps_seconds[max_index:]
@@ -324,6 +321,53 @@ class Trajectory3D:
         # Update the orientation type
         self.orientation_type = new_orientation_type
 
+    def apply_transformation(self, transform: np.ndarray((4, 4)), right_hand=True):
+        # Store the old orientation and position
+        old_orientations = OrientationConversion.convert(
+            self.orientation,
+            self.orientation_type,
+            OrientationType.ROTATION_MATRIX,
+            end_orientation_dim=2,
+        )
+        old_positions = self.position.copy().reshape(-1, 3, 1)
+
+        # Define the old transformations
+        old_transformations = np.concatenate((old_orientations, old_positions), axis=2)
+        old_transformations = np.concatenate(
+            (
+                old_transformations,
+                np.tile(np.array([0, 0, 0, 1]), (len(old_transformations), 1, 1)),
+            ),
+            axis=1,
+        )
+
+        # Define the new transformation
+        if right_hand:
+            new_transformations = old_transformations @ transform
+        else:
+            new_transformations = transform @ old_transformations
+
+        # Update the orientation and position
+        self.position = new_transformations[:, 0:3, 3]
+        self.orientation = OrientationConversion.convert(
+            new_transformations[:, 0:3, 0:3],
+            OrientationType.ROTATION_MATRIX,
+            self.orientation_type,
+        )
+
+    def crop_time(self, start_time, end_time):
+        # Get start and end indices
+        start_index = np.argmax(self.timestamps_seconds >= start_time)
+        end_index = np.argmax(self.timestamps_seconds >= end_time)
+
+        # Set the start time of the trajectory to 0
+        self.timestamps_seconds -= self.timestamps_seconds[start_index]
+
+        # Crop the trajectory
+        self.timestamps_seconds = self.timestamps_seconds[start_index:end_index]
+        self.position = self.position[start_index:end_index, :]
+        self.orientation = self.orientation[start_index:end_index, :]
+
     def _get_trajectory(self):
         return (
             self.orientation_type,
@@ -431,7 +475,7 @@ class Trajectory3D:
 
                     ax.quiver(
                         *(self.position[i, :]),
-                        *((self.position[i, :] + direction_vectors[i, :, j])),
+                        *(direction_vectors[i, :, j]),
                         color=axis_colors[j],
                         length=0.1 * smallest_range,
                     )
@@ -451,14 +495,10 @@ class Trajectory3D:
                 if display_axis != 1:
                     continue
 
+                print(self.position[0, :] + direction_vectors[0, :, j])
                 ax.quiver(
                     *(self.position[:: (skip_num + 1), :].T),
-                    *(
-                        (
-                            self.position[:: (skip_num + 1), :]
-                            + direction_vectors[:: (skip_num + 1), :, j]
-                        ).T
-                    ),
+                    *((direction_vectors[:: (skip_num + 1), :, j]).T),
                     color=axis_colors[j],
                     length=0.1 * smallest_range,
                 )
@@ -489,15 +529,29 @@ if __name__ == "__main__":
     # Remove the initial offset from the trajectory
     trajectory.convert_degree_to_rad()
     trajectory.make_right_handed()
-    trajectory.remove_initial_transformation()
     trajectory.synchronise_initial_time(plot=True)
+    trajectory.remove_initial_transformation()
 
     # Print the trajectory time
     trajectory_time = trajectory._get_trajectory_time_seconds()
     print("Trajectory time: " + str(trajectory_time) + " seconds")
 
     # Plot the trajectory
-    trajectory.plot(simulate=False, update_time=10, orientation_axes=[1, 1, 1])
+    trajectory.plot(simulate=False, update_time=1000, orientation_axes=[1, 1, 1])
+
+    # Apply the transformation to the imu to the trajectory
+    T_ctrl_lcam = np.array(
+        [
+            [-0.68, 0.01, -0.73, -0.0278],
+            [-0.73, 0.00, -0.68, -0.9697],
+            [0.01, 1.00, 0.00, -0.1036],
+            [0, 0, 0, 1],
+        ],
+    )
+    trajectory.apply_transformation(T_ctrl_lcam, right_hand=True)
+
+    # Crop the trajectory in time
+    trajectory.crop_time(0, 10)
 
     # Output converted trajectory as txt file
     # trajectory.convert_orientation(new_orientation_type=OrientationType.QUATERNION)
