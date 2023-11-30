@@ -171,6 +171,44 @@ class Trajectory3D:
             timestamp_column + "_seconds"
         ].to_numpy()
 
+    def synchronise_initial_time(self, plot=False):
+        # Save the x position and time of the trajectory in case of plotting
+        x = self.position[:, 0].copy()
+        t = self.timestamps_seconds.copy()
+
+        # Compute the absolute gradient of the x position
+        abs_grad_x = np.abs(np.gradient(x))
+
+        # Get the maximum index and value of the absolute gradient
+        max_index = np.argmax(abs_grad_x)
+        max_val = abs_grad_x[max_index]
+
+        # Check if the trajectory is stationary at the beginning
+        prev_window = abs_grad_x[max(0, max_index - 30) : max_index + 1]
+        threshold = 0.1 * max_val
+        if np.median(prev_window) > threshold:
+            raise ValueError("The trajectory is not stationary at the beginning")
+
+        # Find the initial time of the trajectory
+        initial_time = self.timestamps_seconds[max_index]
+
+        # Synchronise the initial time of the trajectory to 0
+        self.timestamps_seconds -= initial_time
+
+        # Remove the times before the initial time
+        self.timestamps_seconds = self.timestamps_seconds[max_index:]
+        self.position = self.position[max_index:, :]
+        self.orientation = self.orientation[max_index:, :]
+
+        if plot:
+            # Plot the absolute gradient
+            plt.plot(t, x, "--r", label="Old")
+            plt.plot(self.timestamps_seconds, self.position[:, 0], "-k", label="New")
+            plt.xlabel("Time [s]")
+            plt.ylabel("X-position [m]")
+            plt.legend()
+            plt.show()
+
     def make_right_handed(self):
         # Fix the position
         self.position[:, 1], self.position[:, 2] = (
@@ -434,7 +472,7 @@ if __name__ == "__main__":
 
     # Load the trajectory data
     trajectory.load_trajectory(
-        csv_file="Data-collection/csv_data/rotx_4pts.csv",
+        csv_file="Data-collection/1,1_0_0_10.csv",
         delimiter=";",
         drop_columns=["Email", "Framecount"],
         pose_columns=[
@@ -452,13 +490,14 @@ if __name__ == "__main__":
     trajectory.convert_degree_to_rad()
     trajectory.make_right_handed()
     trajectory.remove_initial_transformation()
+    trajectory.synchronise_initial_time(plot=True)
 
     # Print the trajectory time
     trajectory_time = trajectory._get_trajectory_time_seconds()
     print("Trajectory time: " + str(trajectory_time) + " seconds")
 
     # Plot the trajectory
-    trajectory.plot(simulate=False, update_time=1, orientation_axes=[1, 1, 1])
+    trajectory.plot(simulate=False, update_time=10, orientation_axes=[1, 1, 1])
 
     # Output converted trajectory as txt file
     # trajectory.convert_orientation(new_orientation_type=OrientationType.QUATERNION)
