@@ -141,7 +141,7 @@ class DataLoader:
 
 
 class Trajectory3D:
-    def __init__(self, orientation_type: OrientationType) -> None:
+    def __init__(self, orientation_type: OrientationType, sample_rate) -> None:
         self.position = np.empty([3], dtype=np.float32)
         if orientation_type == OrientationType.EULER:
             self.orientation = np.empty([3], dtype=np.float32)
@@ -153,6 +153,7 @@ class Trajectory3D:
 
         self.timestamps_seconds = []
         self.data_loader = None
+        self.sample_rate = sample_rate
 
     def load_trajectory(
         self, csv_file, delimiter, drop_columns, pose_columns, timestamp_column
@@ -189,13 +190,16 @@ class Trajectory3D:
         if np.median(prev_window) > threshold:
             raise ValueError("The trajectory is not stationary at the beginning")
 
+        # Set start index to half a second before the maximum
+        start_index = max_index - 0.5 * self.sample_rate
+
         # Synchronise the initial time of the trajectory to 0
-        self.timestamps_seconds -= self.timestamps_seconds[max_index]
+        self.timestamps_seconds -= self.timestamps_seconds[start_index]
 
         # Remove the times before the initial time
-        self.timestamps_seconds = self.timestamps_seconds[max_index:]
-        self.position = self.position[max_index:, :]
-        self.orientation = self.orientation[max_index:, :]
+        self.timestamps_seconds = self.timestamps_seconds[start_index:]
+        self.position = self.position[start_index:, :]
+        self.orientation = self.orientation[start_index:, :]
 
         if plot:
             # Plot the absolute gradient
@@ -511,7 +515,7 @@ class Trajectory3D:
 
 if __name__ == "__main__":
     # Create a trajectory object
-    trajectory = Trajectory3D(orientation_type=OrientationType.EULER)
+    trajectory = Trajectory3D(orientation_type=OrientationType.EULER, sample_rate=50.0)
 
     # Load the trajectory data
     trajectory.load_trajectory(
