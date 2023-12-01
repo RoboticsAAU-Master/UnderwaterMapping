@@ -141,7 +141,7 @@ class DataLoader:
 
 
 class Trajectory3D:
-    def __init__(self, orientation_type: OrientationType, sample_rate) -> None:
+    def __init__(self, orientation_type: OrientationType) -> None:
         self.position = np.empty([3], dtype=np.float32)
         if orientation_type == OrientationType.EULER:
             self.orientation = np.empty([3], dtype=np.float32)
@@ -153,7 +153,6 @@ class Trajectory3D:
 
         self.timestamps_seconds = []
         self.data_loader = None
-        self.sample_rate = sample_rate
 
     def load_trajectory(
         self, csv_file, delimiter, drop_columns, pose_columns, timestamp_column
@@ -190,8 +189,10 @@ class Trajectory3D:
         if np.median(prev_window) > threshold:
             raise ValueError("The trajectory is not stationary at the beginning")
 
-        # Set start index to half a second before the maximum
-        start_index = max_index - 0.5 * self.sample_rate
+        # Set start index the maximum
+        start_time = self.timestamps_seconds[max_index]
+        print("Start time: " + str(start_time) + " seconds")
+        start_index = np.argmax(self.timestamps_seconds >= start_time)
 
         # Synchronise the initial time of the trajectory to 0
         self.timestamps_seconds -= self.timestamps_seconds[start_index]
@@ -515,11 +516,11 @@ class Trajectory3D:
 
 if __name__ == "__main__":
     # Create a trajectory object
-    trajectory = Trajectory3D(orientation_type=OrientationType.EULER, sample_rate=50.0)
+    trajectory = Trajectory3D(orientation_type=OrientationType.EULER)
 
     # Load the trajectory data
     trajectory.load_trajectory(
-        csv_file="Data-collection/1,1_0_0_10.csv",
+        csv_file="Data-collection/csv_data/RUD-PT/1,1_0_0_10.csv",
         delimiter=";",
         drop_columns=["Email", "Framecount"],
         pose_columns=[
@@ -539,28 +540,28 @@ if __name__ == "__main__":
     trajectory.synchronise_initial_time(plot=True)
     trajectory.remove_initial_transformation()
 
+    # Plot the trajectory
+    trajectory.plot(simulate=False, update_time=1, orientation_axes=[1, 1, 1])
+
+    # Apply the transformation to the imu to the trajectory
+    T_ctrl_imu = np.array(
+        [
+            [-0.67, 0.00, -0.74, -0.0274],
+            [-0.74, 0.00, -0.67, -0.9702],
+            [0.00, 1.00, 0.00, -0.1036],
+            [0, 0, 0, 1],
+        ],
+    )
+    trajectory.apply_transformation(T_ctrl_imu, right_hand=True)
+    # trajectory.plot(simulate=False, update_time=1000, orientation_axes=[1, 1, 1])
+
+    # Crop the trajectory in time
+    trajectory.crop_time(6.00, 144.0 - 26.99)
+
     # Print the trajectory time
     trajectory_time = trajectory._get_trajectory_time_seconds()
     print("Trajectory time: " + str(trajectory_time) + " seconds")
 
-    # Plot the trajectory
-    trajectory.plot(simulate=False, update_time=1000, orientation_axes=[1, 1, 1])
-
-    # Apply the transformation to the imu to the trajectory
-    T_ctrl_lcam = np.array(
-        [
-            [-0.68, 0.01, -0.73, -0.0278],
-            [-0.73, 0.00, -0.68, -0.9697],
-            [0.01, 1.00, 0.00, -0.1036],
-            [0, 0, 0, 1],
-        ],
-    )
-    trajectory.apply_transformation(T_ctrl_lcam, right_hand=True)
-    trajectory.plot(simulate=False, update_time=1000, orientation_axes=[1, 1, 1])
-
-    # Crop the trajectory in time
-    trajectory.crop_time(0, 10)
-
     # Output converted trajectory as txt file
-    # trajectory.convert_orientation(new_orientation_type=OrientationType.QUATERNION)
-    # trajectory.output_as_txt("Data-collection/trajectory.txt")
+    trajectory.convert_orientation(new_orientation_type=OrientationType.QUATERNION)
+    trajectory.output_as_txt("Data-collection/txt_data/RUD-PT/1,1_0_0_10.txt")
