@@ -189,8 +189,9 @@ class Trajectory3D:
         if np.median(prev_window) > threshold:
             raise ValueError("The trajectory is not stationary at the beginning")
 
-        # Set start index to half a second before the maximum
-        start_time = self.timestamps_seconds[max_index] - 0.5
+        # Set start index the maximum
+        start_time = self.timestamps_seconds[max_index]
+        print("Start time: " + str(start_time) + " seconds")
         start_index = np.argmax(self.timestamps_seconds >= start_time)
 
         # Synchronise the initial time of the trajectory to 0
@@ -539,19 +540,15 @@ if __name__ == "__main__":
     trajectory.synchronise_initial_time(plot=True)
     trajectory.remove_initial_transformation()
 
-    # Print the trajectory time
-    trajectory_time = trajectory._get_trajectory_time_seconds()
-    print("Trajectory time: " + str(trajectory_time) + " seconds")
-
     # Plot the trajectory
     trajectory.plot(simulate=False, update_time=1, orientation_axes=[1, 1, 1])
 
     # Apply the transformation to the imu to the trajectory
     T_ctrl_imu = np.array(
         [
-            [-0.68, 0.01, -0.73, -0.0278],
-            [-0.73, 0.00, -0.68, -0.9697],
-            [0.01, 1.00, 0.00, -0.1036],
+            [-0.67, 0.00, -0.74, -0.0274],
+            [-0.74, 0.00, -0.67, -0.9702],
+            [0.00, 1.00, 0.00, -0.1036],
             [0, 0, 0, 1],
         ],
     )
@@ -559,7 +556,11 @@ if __name__ == "__main__":
     # trajectory.plot(simulate=False, update_time=1000, orientation_axes=[1, 1, 1])
 
     # Crop the trajectory in time
-    trajectory.crop_time(0, 144.0 - 26.99)
+    trajectory.crop_time(6.00, 144.0 - 26.99)
+
+    # Print the trajectory time
+    trajectory_time = trajectory._get_trajectory_time_seconds()
+    print("Trajectory time: " + str(trajectory_time) + " seconds")
 
     # Output converted trajectory as txt file
     trajectory.convert_orientation(new_orientation_type=OrientationType.QUATERNION)

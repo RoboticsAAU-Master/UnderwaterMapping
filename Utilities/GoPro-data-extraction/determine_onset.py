@@ -17,7 +17,7 @@ def determine_onset(axis_data):
         raise ValueError("The trajectory is not stationary at the beginning")
 
     # Set start time to half a second before the maximum
-    start_time = (max_index - 0.5 * IMU_SAMPLE_RATE) * IMU_SAMPLE_RATE
+    start_time = max_index * IMU_SAMPLE_RATE
 
     return start_time
 
