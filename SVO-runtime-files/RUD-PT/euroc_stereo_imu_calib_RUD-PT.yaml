@@ -1,0 +1,76 @@
+label: "Euroc"
+id: 412eab8e4058621f7036b5e765dfe812
+cameras:
+- camera:
+    label: cam0
+    id: 54812562fa109c40fe90b29a59dd7798
+    line-delay-nanoseconds: 0
+    image_height: 1080
+    image_width: 1920
+    type: pinhole
+    intrinsics:
+      cols: 1
+      rows: 4
+      data: [1232.7492808529237, 1232.6166739805392, 957.721636823563, 531.7142789390506]
+      # 1080-by-1920: [899.275335, 898.74595, 953.081595, 537.96799]
+      # 2160-by-3840: [1.79855067e+03, 1.79749190e+03, 1.90616319e+03, 1.07593598e+03]
+    distortion:
+      type: radial-tangential
+      parameters:
+        cols: 1
+        rows: 4
+        data: [0.38191912436919523, 0.3252025786470768, -0.0032067273497221943, 0.0002598785904983175]
+  T_B_C:
+    cols: 4
+    rows: 4
+    data: [ 0.00893882615463668,    0.999948330584165,    0.00484082109964908,    0.0414105663971015,
+            0.999881839409214,    -0.00887747726867242,   -0.0125498054563204,    -0.00454869928923929,
+            -0.0125061827359298,    0.00495242963461662,    -0.999909530324664,    -0.0648290453635467,
+            0,    0,    0,    1 ]
+
+- camera:
+    label: cam1
+    id: 54812562fa109c40fe90b29a59dd7723
+    line-delay-nanoseconds: 0
+    image_height: 1080
+    image_width: 1920
+    type: pinhole
+    intrinsics:
+      cols: 1
+      rows: 4
+      data: [1230.0088210913757, 1230.8782179971606, 974.1651956612279, 542.536200376581]
+    distortion:
+      type: radial-tangential  
+      parameters:
+        cols: 1
+        rows: 4
+        data: [0.35850435248047785, 0.30661314823773217, 0.003077141272488541, 0.009039365665556166]
+  T_B_C: # Camera frame (C) w.r.t. imu frame (B)
+    cols: 4
+    rows: 4
+    data: [ 0.0188447044533479,    0.999655199886389,    -0.0182854711224131,    0.0407776999817796,
+            0.999190494901108,    -0.0181795113688991,    0.0358867700645578,    0.0883564908164004,
+            0.0355419753720068,    -0.0189469445159557,    -0.999188561423801,    -0.0623619293334142,
+            0,    0,    0,    1 ]
+
+imu_params:
+  delay_imu_cam: 0
+  #delay_imu_cam: 0.05389058151757878
+  max_imu_delta_t: 0.01
+  acc_max: 176.0
+  omega_max: 17
+  sigma_omega_c: 0.00150350166
+  sigma_acc_c: 0.01258062486
+  sigma_omega_bias_c: 0.00086515594
+  sigma_acc_bias_c: 0.00381856906
+  sigma_integration: 0.0
+  g: 9.816
+  imu_rate: 200
+
+imu_initialization:
+  velocity: [0.0, 0, 0.0]
+  omega_bias: [0.0, 0, 0.0]
+  acc_bias: [0.0, 0.0, 0.0]
+  velocity_sigma: 2.0
+  omega_bias_sigma: 0.01
+  acc_bias_sigma: 0.1

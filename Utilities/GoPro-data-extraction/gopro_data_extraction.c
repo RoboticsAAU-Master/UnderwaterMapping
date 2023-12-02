@@ -8,7 +8,7 @@
 #include "gpmf-parser/GPMF_utils.h"
 
 #define SHOW_GPMF_STRUCTURE			0
-#define	SHOW_THIS_FOUR_CC			"ACCL" //"ACCL" or "GYRO"
+#define	SHOW_THIS_FOUR_CC			"GYRO" //"ACCL" or "GYRO"
 
 extern void PrintGPMF(GPMF_stream* ms);
 GPMF_ERR readMP4File(char* filename, char* output_folder);
@@ -28,8 +28,8 @@ int main(int argc, char* argv[]) {
 		ret = readMP4File(argv[1], argv[2]);
 	}
 	else {
-		ret = readMP4File("../../_1,1_0_0_2_left_cut.MP4", 
-						  "Output/_1,1_0_0_2/Metadata");
+		ret = readMP4File("../../1,1_0_0_10_left.MP4", 
+						  "Output/1,1_0_0_10/Metadata");
 	}
 
 	printf("\n");
