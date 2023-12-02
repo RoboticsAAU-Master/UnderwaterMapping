@@ -14,9 +14,9 @@ from PIL import ImageFile
 import cv2
 
 CAM_SAMPLE_RATE = 60.0  # Hz
-IMU_SAMPLE_RATE = 197.720721  # Hz
-TIME_START = 0.0
-TIME_END = 1000.0
+IMU_SAMPLE_RATE = 200.0  # Hz
+TIME_START = 26.99
+TIME_END = 144.0
 
 STANDARD_TO_TOPIC = {
     "euroc_mono": ["/cam0/image_raw", "/imu0"],
@@ -161,6 +161,7 @@ def GetImuData(dir: str):
 def AddImuToBag(bagname: str, imu_data, standard):
     with rosbag.Bag(bagname, "a") as bag:
         timer = 0
+        i = 0
 
         for index, row in imu_data.iterrows():
             if (
@@ -175,12 +176,15 @@ def AddImuToBag(bagname: str, imu_data, standard):
 
             imu_msg = Imu()
             imu_msg.header.stamp = timestamp
+            imu_msg.header.seq = i
             imu_msg.linear_acceleration.x = row[0]
             imu_msg.linear_acceleration.y = row[1]
             imu_msg.linear_acceleration.z = row[2]
             imu_msg.angular_velocity.x = row[3]
             imu_msg.angular_velocity.y = row[4]
             imu_msg.angular_velocity.z = row[5]
+
+            i += 1
 
             bag.write(STANDARD_TO_TOPIC[standard][-1], imu_msg, timestamp)
 
@@ -194,9 +198,9 @@ if __name__ == "__main__":
     # OBS: Convert input images to grayscale
     CreateBag(
         args=[
-            "Utilities/GoPro-data-extraction/Output/C4/Images",
-            "Utilities/Bag-conversion/Output/C4.bag",
-            "Utilities/GoPro-data-extraction/Output/C4/Metadata",
+            "Utilities/GoPro-data-extraction/Output/1,1_0_0_10/Images",
+            "Utilities/Bag-conversion/Output/1,1_0_0_10.bag",
+            "Utilities/GoPro-data-extraction/Output/1,1_0_0_10/Metadata",
             "euroc_stereo",
         ]
     )

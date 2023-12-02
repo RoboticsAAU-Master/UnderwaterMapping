@@ -3,9 +3,8 @@ import os
 from tqdm import tqdm
 
 CAM_SAMPLE_RATE = 60.0
-TIME_START = 0.0
-TIME_END = 1000.0
-
+TIME_START = 26.99
+TIME_END = 144.0
 
 def save_all_frames(
     video_path, dir_path, basename, ext, gray=True, frame_skip=0, downscale=1
@@ -49,9 +48,9 @@ def save_all_frames(
 if __name__ == "__main__":
     # Input: path_to_video  output_folder  base_image_name  extension
     save_all_frames(
-        "AW_calib1_right.MP4",
-        "Utilities/GoPro-data-extraction/Output/Calibration_AW/Images",
-        "img_right",
+        "1,1_0_0_10_left.MP4",
+        "Utilities/GoPro-data-extraction/Output/1,1_0_0_10/Images",
+        "img_left",
         "png",
         gray=True,
         frame_skip=0,  # [0, Number of frames]
