@@ -177,7 +177,7 @@ class Trajectory3D:
         t = self.timestamps_seconds.copy()
 
         # Compute the absolute gradient of the x position
-        abs_grad_x = np.abs(np.gradient(x))
+        abs_grad_x = np.abs(np.gradient(np.gradient(x)))
 
         # Get the maximum index and value of the absolute gradient
         max_index = np.argmax(abs_grad_x)
@@ -520,7 +520,7 @@ if __name__ == "__main__":
 
     # Load the trajectory data
     trajectory.load_trajectory(
-        csv_file="Data-collection/csv_data/RUD-PT/1,1_0_0_10.csv",
+        csv_file="Data-collection/csv_data/RUD-PT/2,1_0_0_10.csv",
         delimiter=";",
         drop_columns=["Email", "Framecount"],
         pose_columns=[
@@ -537,11 +537,8 @@ if __name__ == "__main__":
     # Remove the initial offset from the trajectory
     trajectory.convert_degree_to_rad()
     trajectory.make_right_handed()
-    trajectory.synchronise_initial_time(plot=True)
     trajectory.remove_initial_transformation()
-
-    # Plot the trajectory
-    trajectory.plot(simulate=False, update_time=1, orientation_axes=[1, 1, 1])
+    trajectory.synchronise_initial_time(plot=True)
 
     # Apply the transformation to the imu to the trajectory
     T_ctrl_imu = np.array(
@@ -556,7 +553,10 @@ if __name__ == "__main__":
     # trajectory.plot(simulate=False, update_time=1000, orientation_axes=[1, 1, 1])
 
     # Crop the trajectory in time
-    trajectory.crop_time(6.00, 144.0 - 26.99)
+    trajectory.crop_time(54.00 - 47.2911, 114.00 - 47.2911)
+
+    # Plot the trajectory
+    trajectory.plot(simulate=False, update_time=1, orientation_axes=[1, 1, 1])
 
     # Print the trajectory time
     trajectory_time = trajectory._get_trajectory_time_seconds()
@@ -564,4 +564,4 @@ if __name__ == "__main__":
 
     # Output converted trajectory as txt file
     trajectory.convert_orientation(new_orientation_type=OrientationType.QUATERNION)
-    trajectory.output_as_txt("Data-collection/txt_data/RUD-PT/1,1_0_0_10.txt")
+    trajectory.output_as_txt("Data-collection/txt_data/RUD-PT/trajectory.txt")

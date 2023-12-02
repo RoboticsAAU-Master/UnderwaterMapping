@@ -1,0 +1,35 @@
+# 1,1_0_0_10: 
+#     Right crop: 0.0468125
+#     Left time: 32.99 - 144.00
+#     Left onset time: 27.49
+
+1,1_0_0_10:
+    Left crop: -0.0468125
+    Left time: 34.00 - 142.00
+    Left onset time: 27.495
+
+1,1_1_1_1:
+    Left crop: 0.33275
+    Left time: 41.00 - 142.00
+    Left onset time: 33.96
+
+1,1_2_2_1:
+    Left crop: 0.5947083333333333
+    Left time: 32.00 - 141.00
+    Left onset: 24.54
+
+
+2,1_0_0_10:
+    Left crop: 2.7525
+    Left time: 54.00 - 114.00
+    Left onset time: 47.2911
+
+2,1_1_1_1:
+    Left crop: 0.49716666666666665
+    Left time: 54.00 - 112.00
+    Left onset time: 45.285
+
+2,1_2_2_1:
+    Left crop: 0.5763541666666666
+    Left time: 60.00 - 127.00
+    Left onset time: 49.465
