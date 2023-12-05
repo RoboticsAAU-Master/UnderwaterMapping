@@ -23,7 +23,7 @@ Common parameters:
 - mappoint_convergence_sigma2_thresh: 500.0-600.0
 
 Mono parameters:
-- Map scale: 0.15-0.25
+- map_scale: 0.15-0.25
 
 Stereo parameters:
 - automatic_reinitialization: True

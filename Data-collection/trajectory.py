@@ -110,6 +110,32 @@ class OrientationConversion:
                         rotation_matrix.reshape(-1, 3, 3), axes=(0, 2, 1)
                     )
 
+    def to_transformation(positions, orientations, orientation_type):
+        # Add an index dimension if the input is single dimensional
+        if positions.ndim == 1:
+            positions = positions.reshape(1, -1).copy()
+            orientations = orientations.reshape(1, -1).copy()
+
+        # Store the old orientation and position
+        orientations = OrientationConversion.convert(
+            orientations,
+            orientation_type,
+            OrientationType.ROTATION_MATRIX,
+            end_orientation_dim=2,
+        )
+        positions = positions.copy().reshape(-1, 3, 1)
+
+        # Define the old transformations
+        old_transformations = np.concatenate((orientations, positions), axis=2)
+        old_transformations = np.concatenate(
+            (
+                old_transformations,
+                np.tile(np.array([0, 0, 0, 1]), (len(old_transformations), 1, 1)),
+            ),
+            axis=1,
+        )
+        return old_transformations
+
 
 class DataLoader:
     def __init__(self, csv_file, delimiter) -> None:
@@ -331,23 +357,11 @@ class Trajectory3D:
         if transform.shape != (4, 4):
             raise ValueError("The transformation must be a 4x4 matrix")
 
-        # Store the old orientation and position
-        old_orientations = OrientationConversion.convert(
+        # # Store the old transformation
+        old_transformations = OrientationConversion.to_transformation(
+            self.position,
             self.orientation,
             self.orientation_type,
-            OrientationType.ROTATION_MATRIX,
-            end_orientation_dim=2,
-        )
-        old_positions = self.position.copy().reshape(-1, 3, 1)
-
-        # Define the old transformations
-        old_transformations = np.concatenate((old_orientations, old_positions), axis=2)
-        old_transformations = np.concatenate(
-            (
-                old_transformations,
-                np.tile(np.array([0, 0, 0, 1]), (len(old_transformations), 1, 1)),
-            ),
-            axis=1,
         )
 
         # Define the new transformation
@@ -520,7 +534,7 @@ if __name__ == "__main__":
 
     # Load the trajectory data
     trajectory.load_trajectory(
-        csv_file="Data-collection/csv_data/RUD-PT/2,1_0_0_10.csv",
+        csv_file="Data-collection/csv_data/RUD-PT/1,1_0_0_10.csv",
         delimiter=";",
         drop_columns=["Email", "Framecount"],
         pose_columns=[
@@ -544,19 +558,18 @@ if __name__ == "__main__":
     T_ctrl_imu = np.array(
         [
             [-0.67, 0.00, -0.74, -0.0274],
-            [-0.74, 0.00, -0.67, -0.9702],
+            [-0.74, 0.00, 0.67, -0.9702],
             [0.00, 1.00, 0.00, -0.1036],
             [0, 0, 0, 1],
         ],
     )
     trajectory.apply_transformation(T_ctrl_imu, right_hand=True)
-    # trajectory.plot(simulate=False, update_time=1000, orientation_axes=[1, 1, 1])
-
-    # Crop the trajectory in time
-    trajectory.crop_time(54.00 - 47.2911, 114.00 - 47.2911)
 
     # Plot the trajectory
-    trajectory.plot(simulate=False, update_time=1, orientation_axes=[1, 1, 1])
+    trajectory.plot(simulate=False, update_time=1000, orientation_axes=[1, 1, 1])
+
+    # Crop the trajectory in time
+    trajectory.crop_time(60.00 - 49.465, 127.00 - 49.465)
 
     # Print the trajectory time
     trajectory_time = trajectory._get_trajectory_time_seconds()
