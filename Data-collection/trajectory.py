@@ -180,7 +180,7 @@ class Trajectory3D:
         self.timestamps_seconds = []
         self.data_loader = None
 
-    def load_trajectory(
+    def load_csv(
         self, csv_file, delimiter, drop_columns, pose_columns, timestamp_column
     ):
         # Load the csv data and do some preprocessing
@@ -196,6 +196,16 @@ class Trajectory3D:
         self.timestamps_seconds = self.data_loader.df[
             timestamp_column + "_seconds"
         ].to_numpy()
+
+    def load_txt(self, txt_file, delimiter):
+        # Load the txt data
+        data = np.loadtxt(txt_file, delimiter=delimiter, skiprows=1)
+
+        # Save the trajectory data
+        self.position = data[:, 1:4]
+        self.orientation = data[:, 4:]
+
+        self.timestamps_seconds = data[:, 0]
 
     def synchronise_initial_time(self, plot=False):
         # Save the x position and time of the trajectory in case of plotting
@@ -533,7 +543,7 @@ if __name__ == "__main__":
     trajectory = Trajectory3D(orientation_type=OrientationType.EULER)
 
     # Load the trajectory data
-    trajectory.load_trajectory(
+    trajectory.load_csv(
         csv_file="Data-collection/csv_data/RUD-PT/1,1_0_0_10.csv",
         delimiter=";",
         drop_columns=["Email", "Framecount"],
