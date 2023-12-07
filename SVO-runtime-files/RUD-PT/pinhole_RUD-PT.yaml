@@ -20,7 +20,7 @@ max_n_kfs: 30
 
 # Map scale when initialized (not used for stereo)
 # Increase if the initial scene depth is larger
-map_scale: 1.0
+# map_scale: 0.2
 
 # Initial rotation
 T_world_imuinit/qx: 0
@@ -82,7 +82,7 @@ reprojector_max_n_kfs: 15 # Local map size. Larger is computationally more inten
 scan_epi_unit_sphere: False # for wide angle lens, set it to True.
 
 # Pose Optimization
-poseoptim_thresh: 4.0 # Reprojection outlier threshold (px), should be larger for larger images.
+poseoptim_thresh: 6.0 # Reprojection outlier threshold (px), should be larger for larger images.
 poseoptim_using_unit_sphere: False # For wide angle lens, set it to True
 
 # Depth Filter

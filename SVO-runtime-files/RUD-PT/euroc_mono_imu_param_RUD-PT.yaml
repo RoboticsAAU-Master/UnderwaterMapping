@@ -7,17 +7,17 @@ img_align_prior_lambda_trans: 0
 # If set to false, we process the next frame(s) only when the depth update is finished
 use_threaded_depthfilter: false
 # If the number of features are below this number, consider as failure
-quality_min_fts: 20
+quality_min_fts: 5
 # If the number of features reduce by this number for consecutive frames, consider as failure
 quality_max_drop_fts: 180
 
 max_n_kfs: 10
-map_scale: 0.2
+map_scale: 1
 kfselect_criterion: FORWARD # FORWARD or DOWNLOOKING
 kfselect_numkfs_upper_thresh: 160 # If it has more features, it never creates a keyframe
 kfselect_numkfs_lower_thresh: 70 # If it has less features, it always creates a keyframe
 kfselect_min_num_frames_between_kfs: 0 # ..except this.
-kfselect_min_disparity: 30
+kfselect_min_disparity: 10
 kfselect_min_angle: 3
 kfselect_min_dist_metric: 0.01
 update_seeds_with_old_keyframes: True
