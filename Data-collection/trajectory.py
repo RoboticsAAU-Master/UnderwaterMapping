@@ -180,6 +180,23 @@ class Trajectory3D:
         self.timestamps_seconds = []
         self.data_loader = None
 
+    def _copy(self):
+        new_trajectory = Trajectory3D(self.orientation_type)
+        new_trajectory.position = self.position.copy()
+        new_trajectory.orientation = self.orientation.copy()
+        new_trajectory.timestamps_seconds = self.timestamps_seconds.copy()
+
+        return new_trajectory
+
+    def _get_trajectory(self):
+        return (
+            self.orientation_type,
+            np.concatenate((self.position, self.orientation), axis=1),
+        )
+
+    def _get_trajectory_time_seconds(self):
+        return self.timestamps_seconds[-1]
+
     def load_csv(
         self, csv_file, delimiter, drop_columns, pose_columns, timestamp_column
     ):
@@ -262,6 +279,7 @@ class Trajectory3D:
             self.orientation_type,
             OrientationType.EULER,
         )
+        old_orientations = self.orientation.copy()
 
         # Fix the orientation
         def rotX(angles):
@@ -401,15 +419,6 @@ class Trajectory3D:
         self.position = self.position[start_index:end_index, :]
         self.orientation = self.orientation[start_index:end_index, :]
 
-    def _get_trajectory(self):
-        return (
-            self.orientation_type,
-            np.concatenate((self.position, self.orientation), axis=1),
-        )
-
-    def _get_trajectory_time_seconds(self):
-        return self.timestamps_seconds[-1]
-
     def output_as_txt(self, output_file):
         # Create a header row
         match self.orientation_type:
@@ -538,13 +547,56 @@ class Trajectory3D:
             plt.show()
 
 
+def show_gt_error(
+    trajectory: Trajectory3D, T_aqrm_ctrl, T_ctrl_limu, T_ctrl_rimu, save=False
+):
+    trajectory_ctrl = trajectory._copy()
+
+    # Create a figure and axis
+    fig, ax = plt.subplots()
+
+    trajectory_ctrl.apply_transformation(T_aqrm_ctrl, right_hand=False)
+
+    trajectory_limu = trajectory_ctrl._copy()
+    trajectory_rimu = trajectory_ctrl._copy()
+
+    trajectory_limu.apply_transformation(T_ctrl_limu, right_hand=True)
+    ax.plot(
+        trajectory_limu.position[:, 0], trajectory_limu.position[:, 1], label="Left Cam"
+    )
+
+    trajectory_rimu.apply_transformation(T_ctrl_rimu, right_hand=True)
+    ax.plot(
+        trajectory_rimu.position[:, 0],
+        trajectory_rimu.position[:, 1],
+        label="Right Cam",
+    )
+
+    # Customize the appearance
+    ax.spines["top"].set_position(("data", 0.4))
+    ax.spines["right"].set_position(("data", 0.8))
+    # Set the lengths of the spines
+    ax.spines["top"].set_bounds(0, 0.8)
+    ax.spines["right"].set_bounds(0, 0.4)
+
+    ax.set_xlim(0, 0.9)
+    ax.set_ylim(0, 0.5)
+    ax.set_aspect("equal")
+
+    ax.legend(loc="upper right")
+
+    if save:
+        plt.savefig("Ground_truth_error", dpi=300)
+    plt.show()
+
+
 if __name__ == "__main__":
     # Create a trajectory object
     trajectory = Trajectory3D(orientation_type=OrientationType.EULER)
 
     # Load the trajectory data
     trajectory.load_csv(
-        csv_file="Data-collection/csv_data/RUD-PT/1,1_0_0_10.csv",
+        csv_file="Data-collection/csv_data/RUD-PT/2,1_2_2_1.csv",
         delimiter=";",
         drop_columns=["Email", "Framecount"],
         pose_columns=[
@@ -564,22 +616,53 @@ if __name__ == "__main__":
     trajectory.remove_initial_transformation()
     trajectory.synchronise_initial_time(plot=True)
 
-    # Apply the transformation to the imu to the trajectory
-    T_ctrl_imu = np.array(
+    # Crop the trajectory in time
+    trajectory.crop_time(60.00 - 49.465, 127.00 - 49.465)
+
+    # Define transformations
+    alpha = 3.0 * np.pi / 180
+    T_sctrl_actrl = np.array(
         [
-            [-0.67, 0.00, -0.74, -0.0274],
-            [-0.74, 0.00, 0.67, -0.9702],
-            [0.00, 1.00, 0.00, -0.1036],
+            [1.00, 0.00, 0.00, 0.00],
+            [0.00, np.cos(alpha), np.sin(alpha), 0.00],
+            [0.00, -np.sin(alpha), np.cos(alpha), -0.0023],
             [0, 0, 0, 1],
         ],
     )
-    trajectory.apply_transformation(T_ctrl_imu, right_hand=True)
+    T_aqrm_ctrl = np.array(
+        [
+            [1.00, 0.00, 0.00, 0.0805],
+            [0.00, 0.00, -1.00, 0.0539],
+            [0.00, 1.00, 0.00, 1.117],
+            [0, 0, 0, 1],
+        ],
+    )
+    T_ctrl_limu = np.array(
+        [
+            [-0.67, 0.00, -0.74, -0.0314],
+            [-0.74, 0.00, 0.67, -0.9710],
+            [0.00, 1.00, 0.00, -0.1004],
+            [0, 0, 0, 1],
+        ],
+    )
+    T_ctrl_rimu = np.array(
+        [
+            [-0.67, 0.00, -0.74, -0.0314],
+            [-0.74, 0.00, 0.67, -0.9710],
+            [0.00, 1.00, 0.00, -0.0054],
+            [0, 0, 0, 1],
+        ],
+    )
+
+    # Plot the ground truth error
+    # show_gt_error(trajectory, T_aqrm_ctrl, T_ctrl_limu, T_ctrl_rimu, save=False)
+
+    # Apply transformations
+    trajectory.apply_transformation(np.linalg.inv(T_sctrl_actrl), right_hand=True)
+    trajectory.apply_transformation(T_ctrl_limu, right_hand=True)
 
     # Plot the trajectory
-    trajectory.plot(simulate=False, update_time=1000, orientation_axes=[1, 1, 1])
-
-    # Crop the trajectory in time
-    trajectory.crop_time(60.00 - 49.465, 127.00 - 49.465)
+    trajectory.plot(simulate=False, update_time=1, orientation_axes=[1, 1, 1])
 
     # Print the trajectory time
     trajectory_time = trajectory._get_trajectory_time_seconds()
