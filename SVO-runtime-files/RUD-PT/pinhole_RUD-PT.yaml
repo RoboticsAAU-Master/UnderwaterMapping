@@ -64,13 +64,13 @@ reprojector_affine_est_gain: false
 ########################################
 # Initialization
 # For a higher resolution, increase the value accordingly.
-init_min_disparity: 30 # 30
+init_min_disparity: 1 # 30
 
 # Feature Detection
 grid_size: 30 # Larger for larger images, for every cell you have max one feature.
 n_pyr_levels: 4 # Increase for larger images (image align max minus one)
-detector_threshold_primary: 10 # Fast detector threshold
-detector_threshold_secondary: 200 # Edgelet detector threshold
+detector_threshold_primary: 3 # Fast detector threshold
+detector_threshold_secondary: 18 # Edgelet detector threshold
 
 # Image Alignment
 img_align_max_level: 5 # Increase this level by one if the image is double the width and height (752x480).
