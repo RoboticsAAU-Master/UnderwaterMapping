@@ -548,24 +548,34 @@ class Trajectory3D:
 
 
 def show_gt_error(
-    trajectory: Trajectory3D, T_aqrm_ctrl, T_ctrl_limu, T_ctrl_rimu, save=False
+    trajectory: Trajectory3D,
+    T_aqrm_sctrl,
+    T_sctrl_actrl,
+    T_sctrl_limu,
+    T_sctrl_rimu,
+    save=False,
 ):
     trajectory_ctrl = trajectory._copy()
 
     # Create a figure and axis
     fig, ax = plt.subplots()
 
-    trajectory_ctrl.apply_transformation(T_aqrm_ctrl, right_hand=False)
+    # The transformation is calculated as follows ([] denotes the starting transformation and ' denotes a static frame)):
+    # T_aqrm'_limu = T_aqrm'_sctrl * T_sctrl'_actrl* [T_actrl'_actrl] * T_actrl_sctrl * T_sctrl_limu
+
+    trajectory_ctrl.apply_transformation(T_sctrl_actrl, right_hand=False)
+    trajectory_ctrl.apply_transformation(T_aqrm_sctrl, right_hand=False)
+    trajectory_ctrl.apply_transformation(np.linalg.inv(T_sctrl_actrl), right_hand=True)
 
     trajectory_limu = trajectory_ctrl._copy()
     trajectory_rimu = trajectory_ctrl._copy()
 
-    trajectory_limu.apply_transformation(T_ctrl_limu, right_hand=True)
+    trajectory_limu.apply_transformation(T_sctrl_limu, right_hand=True)
     ax.plot(
         trajectory_limu.position[:, 0], trajectory_limu.position[:, 1], label="Left Cam"
     )
 
-    trajectory_rimu.apply_transformation(T_ctrl_rimu, right_hand=True)
+    trajectory_rimu.apply_transformation(T_sctrl_rimu, right_hand=True)
     ax.plot(
         trajectory_rimu.position[:, 0],
         trajectory_rimu.position[:, 1],
@@ -596,7 +606,7 @@ if __name__ == "__main__":
 
     # Load the trajectory data
     trajectory.load_csv(
-        csv_file="Data-collection/csv_data/RUD-PT/2,1_2_2_1.csv",
+        csv_file="Data-collection/csv_data/RUD-PT/1,1_0_0_10.csv",
         delimiter=";",
         drop_columns=["Email", "Framecount"],
         pose_columns=[
@@ -614,10 +624,10 @@ if __name__ == "__main__":
     trajectory.convert_degree_to_rad()
     trajectory.make_right_handed()
     trajectory.remove_initial_transformation()
-    trajectory.synchronise_initial_time(plot=True)
+    trajectory.synchronise_initial_time(plot=False)
 
     # Crop the trajectory in time
-    trajectory.crop_time(60.00 - 49.465, 127.00 - 49.465)
+    trajectory.crop_time(34.00 - 27.495, 142.00 - 27.495)
 
     # Define transformations
     alpha = 3.0 * np.pi / 180
@@ -629,7 +639,7 @@ if __name__ == "__main__":
             [0, 0, 0, 1],
         ],
     )
-    T_aqrm_ctrl = np.array(
+    T_aqrm_sctrl = np.array(
         [
             [1.00, 0.00, 0.00, 0.0805],
             [0.00, 0.00, -1.00, 0.0539],
@@ -637,7 +647,7 @@ if __name__ == "__main__":
             [0, 0, 0, 1],
         ],
     )
-    T_ctrl_limu = np.array(
+    T_sctrl_limu = np.array(
         [
             [-0.67, 0.00, -0.74, -0.0314],
             [-0.74, 0.00, 0.67, -0.9710],
@@ -645,7 +655,7 @@ if __name__ == "__main__":
             [0, 0, 0, 1],
         ],
     )
-    T_ctrl_rimu = np.array(
+    T_sctrl_rimu = np.array(
         [
             [-0.67, 0.00, -0.74, -0.0314],
             [-0.74, 0.00, 0.67, -0.9710],
@@ -655,11 +665,13 @@ if __name__ == "__main__":
     )
 
     # Plot the ground truth error
-    # show_gt_error(trajectory, T_aqrm_ctrl, T_ctrl_limu, T_ctrl_rimu, save=False)
+    show_gt_error(
+        trajectory, T_aqrm_sctrl, T_sctrl_actrl, T_sctrl_limu, T_sctrl_rimu, save=False
+    )
 
     # Apply transformations
     trajectory.apply_transformation(np.linalg.inv(T_sctrl_actrl), right_hand=True)
-    trajectory.apply_transformation(T_ctrl_limu, right_hand=True)
+    trajectory.apply_transformation(T_sctrl_limu, right_hand=True)
 
     # Plot the trajectory
     trajectory.plot(simulate=False, update_time=1, orientation_axes=[1, 1, 1])
@@ -670,4 +682,4 @@ if __name__ == "__main__":
 
     # Output converted trajectory as txt file
     trajectory.convert_orientation(new_orientation_type=OrientationType.QUATERNION)
-    trajectory.output_as_txt("Data-collection/txt_data/RUD-PT/trajectory.txt")
+    trajectory.output_as_txt("Data-collection/txt_data/RUD-PT/1,1_0_0_10_gt.txt")
