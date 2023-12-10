@@ -405,6 +405,15 @@ class Trajectory3D:
         )
 
     def crop_time(self, start_time, end_time):
+        if start_time > end_time:
+            raise ValueError("The start time cannot be greater than the end time")
+
+        if start_time < 0:
+            start_time = 0
+
+        if end_time > self.timestamps_seconds[-1]:
+            end_time = self.timestamps_seconds[-1]
+
         # Get start and end indices
         start_index = np.argmax(self.timestamps_seconds >= start_time)
         end_index = np.argmax(self.timestamps_seconds >= end_time)
@@ -558,7 +567,7 @@ def show_gt_error(
     # Create a figure and axis
     fig, ax = plt.subplots()
 
-    # The transformation is calculated as follows ([] denotes the starting transformation and ' denotes a static frame)):
+    # The transformation is calculated as follows ([] denotes the starting transformation and ' denotes a static frame):
     # T_aqrm'_limu = T_aqrm'_sctrl * T_sctrl'_actrl* [T_actrl'_actrl] * T_actrl_sctrl * T_sctrl_limu
 
     trajectory_ctrl.apply_transformation(T_sctrl_actrl, right_hand=False)
@@ -591,10 +600,13 @@ def show_gt_error(
     ax.set_ylim(0, 0.5)
     ax.set_aspect("equal")
 
+    ax.set_xlabel("X [m]")
+    ax.set_ylabel("Y [m]")
+
     ax.legend(loc="upper right")
 
     if save:
-        plt.savefig("Ground_truth_error", dpi=300)
+        plt.savefig("Ground_truth_error_fixed", dpi=300)
     plt.show()
 
 
@@ -604,7 +616,7 @@ if __name__ == "__main__":
     #trajectory2 = Trajectory3D(orientation_type=OrientationType.QUATERNION)
     # Load the trajectory data
     trajectory.load_csv(
-        csv_file="Data-collection/csv_data/RUD-PT/1,1_0_0_10.csv",
+        csv_file="Data-collection/csv_data/RUD-PT/2,1_1_1_1.csv",
         delimiter=";",
         drop_columns=["Email", "Framecount"],
         pose_columns=[
@@ -625,7 +637,7 @@ if __name__ == "__main__":
     trajectory.synchronise_initial_time(plot=False)
 
     # Crop the trajectory in time
-    trajectory.crop_time(34.00 - 27.495, 142.00 - 27.495)
+    # trajectory.crop_time(34.00 - 27.495, 142.00 - 27.495)
 
     # Define transformations
     alpha = 3.0 * np.pi / 180
@@ -680,4 +692,4 @@ if __name__ == "__main__":
 
     # Output converted trajectory as txt file
     trajectory.convert_orientation(new_orientation_type=OrientationType.QUATERNION)
-    trajectory.output_as_txt("Data-collection/txt_data/RUD-PT/1,1_0_0_10_gt.txt")
+    trajectory.output_as_txt("Data-collection/txt_data/RUD-PT/trajectory.txt")
