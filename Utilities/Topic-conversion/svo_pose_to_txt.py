@@ -17,9 +17,9 @@ def topic_to_txt(pose_topic, txt_name, output_folder):
         rospy.init_node('svo_to_txt')
         
         def callback_pose(data : PoseWithCovarianceStamped):
-            x = data.pose.pose.position.x
+            x = data.pose.pose.position.x   
             y = data.pose.pose.position.y      
-            z = data.pose.pose.position.z
+            z = data.pose.pose.position.z   
             qx = data.pose.pose.orientation.x
             qy = data.pose.pose.orientation.y
             qz = data.pose.pose.orientation.z
@@ -41,7 +41,7 @@ def topic_to_txt(pose_topic, txt_name, output_folder):
 
 if __name__ == "__main__":
     pose_topic = "/svo/pose_imu" # Pose of imu for camera 0 (left cam). Message type is assumed to be geometry_msgs/PoseStamped
-    output_name = "1,1_1_1_1_eval.txt" # Name of .txt file to be created (with extension).
+    output_name = "2,1_2_2_1_eval_4.txt" # Name of .txt file to be created (with extension).
     output_folder = "Data-collection/txt_data/RUD-PT" # Output folder to store csv-file
 
     # topic_to_csv writes any messages received on the pose_topic into the csv. 
