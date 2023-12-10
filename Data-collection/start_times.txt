@@ -1,0 +1,7 @@
+2,1_0_0_10: Start: 16 s, (duration 6 for image)
+2,1_1_1_1:  Start: 18 s, (duration 7 for image)
+2,1_2_2_1:  Start: 21 s, (duration 5 for image)
+
+1,1_0_0_10: (duration 25 for image)
+1,1_1_1_1:  (duration 24 for image)
+1,1_2_2_1:  (duration 25 for image)

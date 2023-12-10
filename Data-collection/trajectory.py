@@ -36,7 +36,7 @@ class OrientationConversion:
 
             return orientations
 
-        if start_orientation_type ==  OrientationType.EULER:
+        if start_orientation_type == OrientationType.EULER:
             # Convert the euler angles to rotation matrix
             if end_orientation_type == OrientationType.ROTATION_MATRIX:
                 rotation_matrices = np.zeros((len(orientations), 3, 3))
@@ -53,9 +53,7 @@ class OrientationConversion:
                 return np.roll(quaternions, shift=-1, axis=1)
         elif start_orientation_type == OrientationType.ROTATION_MATRIX:
             # Make sure the rotation matrices are 2d
-            orientations = OrientationConversion.change_rot_matrix_dim(
-                orientations, 2
-            )
+            orientations = OrientationConversion.change_rot_matrix_dim(orientations, 2)
 
             # Convert the rotation matrices to euler angles
             if end_orientation_type == OrientationType.EULER:
@@ -83,9 +81,7 @@ class OrientationConversion:
             elif end_orientation_type == OrientationType.ROTATION_MATRIX:
                 rotation_matrices = np.zeros((len(orientations), 3, 3))
                 for i in range(len(orientations)):
-                    rotation_matrices[i] = t3d.quaternions.quat2mat(
-                        orientations[i, :]
-                    )
+                    rotation_matrices[i] = t3d.quaternions.quat2mat(orientations[i, :])
                 return OrientationConversion.change_rot_matrix_dim(
                     rotation_matrices, end_orientation_dim
                 )
@@ -104,9 +100,7 @@ class OrientationConversion:
             if rotation_matrix.shape[-1] == 3:
                 return rotation_matrix.reshape(-1, 3, 3)
             else:
-                return np.transpose(
-                    rotation_matrix.reshape(-1, 3, 3), axes=(0, 2, 1)
-                )
+                return np.transpose(rotation_matrix.reshape(-1, 3, 3), axes=(0, 2, 1))
 
     def to_transformation(positions, orientations, orientation_type):
         # Add an index dimension if the input is single dimensional
@@ -242,6 +236,8 @@ class Trajectory3D:
 
         # Set start index the maximum
         start_time = self.timestamps_seconds[max_index]
+        # start_time = 1.92  # For 2,1_0_0_10
+
         print("Start time: " + str(start_time) + " seconds")
         start_index = np.argmax(self.timestamps_seconds >= start_time)
 
@@ -428,7 +424,7 @@ class Trajectory3D:
 
     def output_as_txt(self, output_file):
         # Create a header row
-        
+
         if self.orientation_type == OrientationType.EULER:
             header_row = ["timestamp", "tx", "ty", "tz", "rx", "ry", "rz"]
         elif self.orientation_type == OrientationType.ROTATION_MATRIX:
@@ -473,7 +469,7 @@ class Trajectory3D:
         ax.set_zlabel("Z")
 
         # Set axis limits
-        ax_bound = 0.2
+        ax_bound = 1.0
         ax.set_xlim3d(-ax_bound, ax_bound)
         ax.set_ylim3d(-ax_bound, ax_bound)
         ax.set_zlim3d(-ax_bound, ax_bound)
@@ -612,11 +608,11 @@ def show_gt_error(
 
 if __name__ == "__main__":
     # Create a trajectory object
-    trajectory = Trajectory3D(orientation_type=OrientationType.QUATERNION)
-    #trajectory2 = Trajectory3D(orientation_type=OrientationType.QUATERNION)
+    trajectory = Trajectory3D(orientation_type=OrientationType.EULER)
+
     # Load the trajectory data
     trajectory.load_csv(
-        csv_file="Data-collection/csv_data/RUD-PT/2,1_1_1_1.csv",
+        csv_file="Data-collection/csv_data/RUD-PT/1,1_0_0_10.csv",
         delimiter=";",
         drop_columns=["Email", "Framecount"],
         pose_columns=[
@@ -634,10 +630,10 @@ if __name__ == "__main__":
     trajectory.convert_degree_to_rad()
     trajectory.make_right_handed()
     trajectory.remove_initial_transformation()
-    trajectory.synchronise_initial_time(plot=False)
+    trajectory.synchronise_initial_time(plot=True)
 
     # Crop the trajectory in time
-    # trajectory.crop_time(34.00 - 27.495, 142.00 - 27.495)
+    # trajectory.crop_time(54.00 - 47.2911, 114.00 - 47.2911)
 
     # Define transformations
     alpha = 3.0 * np.pi / 180
@@ -682,6 +678,9 @@ if __name__ == "__main__":
     # Apply transformations
     trajectory.apply_transformation(np.linalg.inv(T_sctrl_actrl), right_hand=True)
     trajectory.apply_transformation(T_sctrl_limu, right_hand=True)
+
+    plt.plot(trajectory.timestamps_seconds, trajectory.position[:, 0])
+    plt.show()
 
     # Plot the trajectory
     trajectory.plot(simulate=False, update_time=1, orientation_axes=[1, 1, 1])
