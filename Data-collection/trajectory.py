@@ -679,9 +679,6 @@ if __name__ == "__main__":
     trajectory.apply_transformation(np.linalg.inv(T_sctrl_actrl), right_hand=True)
     trajectory.apply_transformation(T_sctrl_limu, right_hand=True)
 
-    plt.plot(trajectory.timestamps_seconds, trajectory.position[:, 0])
-    plt.show()
-
     # Plot the trajectory
     trajectory.plot(simulate=False, update_time=1, orientation_axes=[1, 1, 1])
 
