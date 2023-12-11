@@ -400,7 +400,7 @@ class Trajectory3D:
             self.orientation_type,
         )
 
-    def crop_time(self, start_time, end_time):
+    def crop_time(self, start_time, end_time, shift_time=True):
         if start_time > end_time:
             raise ValueError("The start time cannot be greater than the end time")
 
@@ -415,7 +415,8 @@ class Trajectory3D:
         end_index = np.argmax(self.timestamps_seconds >= end_time)
 
         # Set the start time of the trajectory to 0
-        self.timestamps_seconds -= self.timestamps_seconds[start_index]
+        if shift_time:
+            self.timestamps_seconds -= self.timestamps_seconds[start_index]
 
         # Crop the trajectory
         self.timestamps_seconds = self.timestamps_seconds[start_index:end_index]
@@ -612,7 +613,7 @@ if __name__ == "__main__":
 
     # Load the trajectory data
     trajectory.load_csv(
-        csv_file="Data-collection/csv_data/RUD-PT/1,1_0_0_10.csv",
+        csv_file="Data-collection/csv_data/RUD-PT/2,1_2_2_1.csv",
         delimiter=";",
         drop_columns=["Email", "Framecount"],
         pose_columns=[
@@ -633,7 +634,10 @@ if __name__ == "__main__":
     trajectory.synchronise_initial_time(plot=True)
 
     # Crop the trajectory in time
-    # trajectory.crop_time(54.00 - 47.2911, 114.00 - 47.2911)
+    # trajectory.crop_time(60.00 - 49.465, 127.00 - 49.465, shift_time=True)
+    # trajectory.crop_time(
+    #     21.00, trajectory._get_trajectory_time_seconds(), shift_time=False
+    # )
 
     # Define transformations
     alpha = 3.0 * np.pi / 180
@@ -688,4 +692,4 @@ if __name__ == "__main__":
 
     # Output converted trajectory as txt file
     trajectory.convert_orientation(new_orientation_type=OrientationType.QUATERNION)
-    trajectory.output_as_txt("Data-collection/txt_data/RUD-PT/trajectory.txt")
+    trajectory.output_as_txt("Data-collection/txt_data/RUD-PT/2,1_2_2_1/trajectory.txt")
