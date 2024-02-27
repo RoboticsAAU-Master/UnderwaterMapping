@@ -133,7 +133,7 @@ def CreateBag(args):
     # Check if imu path has been specified
     if len(args) > 2:
         imu_data = GetImuData(args[2])
-        AddImuToBag(args[1], imu_data, args[3])
+        AddImuToBag(args[1], imu_data, args[3], args[4], args[5])
 
 
 def GetImuData(dir: str):
@@ -158,16 +158,13 @@ def GetImuData(dir: str):
     return imu_data
 
 
-def AddImuToBag(bagname: str, imu_data, standard):
+def AddImuToBag(bagname: str, imu_data, standard, t_start, t_end):
     with rosbag.Bag(bagname, "a") as bag:
         timer = 0
         i = 0
 
         for index, row in imu_data.iterrows():
-            if (
-                index < TIME_START * IMU_SAMPLE_RATE
-                or index > TIME_END * IMU_SAMPLE_RATE
-            ):
+            if index < t_start * IMU_SAMPLE_RATE or index > t_end * IMU_SAMPLE_RATE:
                 continue
 
             row = row.tolist()
@@ -202,5 +199,7 @@ if __name__ == "__main__":
             "Utilities/Bag-conversion/Output/1,1_0_0_10.bag",
             "Utilities/GoPro-data-extraction/Output/1,1_0_0_10/Metadata",
             "euroc_stereo",
+            TIME_START,
+            TIME_END,
         ]
     )

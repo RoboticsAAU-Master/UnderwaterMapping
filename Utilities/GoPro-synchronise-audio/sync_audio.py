@@ -10,7 +10,7 @@ video2_input = "1,1_0_0_10_right.MP4"
 offset_output = "Utilities/GoPro-synchronise-audio/Output/apriltag_torch.text"
 
 
-def get_offset(video1, video2, output_file=None):
+def get_offset(video1, video2, output_file=None, overwrite=False):
     args = {
         "in1": video1,
         "in2": video2,
@@ -20,10 +20,13 @@ def get_offset(video1, video2, output_file=None):
 
     file_ahead, offset = file_offset(**args)
 
+    if video1.split("/")[-1] != file_ahead:  # Change sign of offset if video2 is ahead
+         offset = -offset
+
     # Return if no output file is specified
     if output_file is not None:
         # Check if the file exists
-        file_mode = "a" if os.path.exists(output_file) else "w"
+        file_mode = "a" if (os.path.exists(output_file) and not overwrite) else "w"
         
         # Write offset to file
         with open(output_file, file_mode) as file:

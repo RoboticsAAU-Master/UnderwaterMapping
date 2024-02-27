@@ -3,12 +3,11 @@ import os
 from tqdm import tqdm
 
 CAM_SAMPLE_RATE = 60.0
-TIME_START = 54.0
-TIME_END = 114.0
-
+T_START = 54.0
+T_END = 114.0
 
 def save_all_frames(
-    video_path, dir_path, basename, ext, gray=True, frame_skip=0, downscale=1
+    video_path, dir_path, basename, ext, t_start, t_end, gray=True, frame_skip=0, downscale=1
 ):
     cap = cv2.VideoCapture(video_path)
 
@@ -24,9 +23,9 @@ def save_all_frames(
     t = 0
     for f in tqdm(range(int(cap.get(cv2.CAP_PROP_FRAME_COUNT)))):
         ret, frame = cap.read()
-
+        
         t += 1 / CAM_SAMPLE_RATE
-        if t < TIME_START or t > TIME_END:
+        if t < t_start or t > t_end:
             continue
 
         if ret:
@@ -53,6 +52,8 @@ if __name__ == "__main__":
         "Utilities/GoPro-data-extraction/Output/2,1_0_0_10/Images",
         "img_left",
         "png",
+        T_START,
+        T_END,
         gray=True,
         frame_skip=2,  # [0, Number of frames]
         downscale=0.5,  # [0, 1]
