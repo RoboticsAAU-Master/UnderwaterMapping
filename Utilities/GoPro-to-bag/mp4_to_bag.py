@@ -49,6 +49,14 @@ for video_left, video_right in zip(videos_left, videos_right):
     output_folder = base_path + "GoPro-data-extraction/Output/" + video_left_base[:7] + "/Metadata"
     subprocess.run([base_path + "GoPro-to-bag/extract_metadata.sh", video_left, output_folder])
 
+    from determine_onset import determine_onset
+    try :
+        onset_time = determine_onset(output_folder + "/outputAccl.csv")
+        new_times[video_left_base[:7]]["left_onset"] = onset_time
+    except ValueError as e:
+        print(e)
+        continue
+    
 
     ### Converting the images and metadata to a bag file ###
     from gopro_to_bag import CreateBag

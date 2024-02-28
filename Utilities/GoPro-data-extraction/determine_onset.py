@@ -6,7 +6,13 @@ import matplotlib.pyplot as plt
 IMU_SAMPLE_RATE = 200.0
 
 
-def determine_onset(axis_data):
+def determine_onset(accl_file):
+    # Read the data
+    accl = pd.read_csv(accl_file, delimiter=",", header=None)
+    accl.drop(accl.columns[-1], axis=1, inplace=True)
+    
+    axis_data = accl.iloc[:, 0].to_numpy()
+    
     data = np.abs(np.gradient(axis_data[:len(axis_data)//2]))
     
     # Get the maximum index and value of the absolute gradient
@@ -26,12 +32,8 @@ def determine_onset(axis_data):
 
 
 if __name__ == "__main__":
-    # Read the data
-    accl = pd.read_csv("Utilities/GoPro-data-extraction/Output/1,1_0_0_10/Metadata/outputAccl.csv", delimiter=",", header=None)
-    accl.drop(accl.columns[-1], axis=1, inplace=True)
-
     # Determine the onset
-    onset_time = determine_onset(accl.iloc[:, 0].to_numpy())
+    onset_time = determine_onset("Utilities/GoPro-data-extraction/Output/1,1_0_0_10/Metadata/outputAccl.csv")
 
     # Print the onset
     print("The onset is at {} seconds".format(onset_time))
