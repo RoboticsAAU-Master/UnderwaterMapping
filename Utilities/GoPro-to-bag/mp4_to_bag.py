@@ -3,6 +3,7 @@ import sys
 import json
 import glob
 import ntpath
+import subprocess
 
 # Mp4 files to convert
 base_path = "/RUD-PT/rudpt_ws/src/UnderwaterMapping/Utilities/"
@@ -39,25 +40,27 @@ for video_left, video_right in zip(videos_left, videos_right):
     ### Extracting the frames from the videos ###
     from extract_frames import save_all_frames
     
-    output_folder = base_path + "GoPro-data-extraction/Output/1,1_0_0_10/Images"
+    output_folder = base_path + "GoPro-data-extraction/Output/" + video_left_base[:7] + "/Images"
     save_all_frames(video_left, output_folder, "img_left", "png", T_START, T_END, gray=True, frame_skip=2, downscale=0.5)
     save_all_frames(video_right, output_folder, "img_right", "png", T_START - offset, T_END - offset, gray=True, frame_skip=2, downscale=0.5)
     
+    
     ### Extracting the metadata from the videos ###
-
+    output_folder = base_path + "GoPro-data-extraction/Output/" + video_left_base[:7] + "/Metadata"
+    subprocess.run([base_path + "GoPro-to-bag/extract_metadata.sh", video_left, output_folder])
 
 
     ### Converting the images and metadata to a bag file ###
-    # from gopro_to_bag import CreateBag
+    from gopro_to_bag import CreateBag
 
-    # CreateBag(args=[
-    #     base_path + "GoPro-data-extraction/Output/1,1_0_0_10/Images",
-    #     base_path + "Bag-conversion/Output/1,1_0_0_10.bag",
-    #     base_path + "GoPro-data-extraction/Output/1,1_0_0_10/Metadata",
-    #     "euroc_stereo",
-    #     T_START,
-    #     T_END,
-    # ])
+    CreateBag(args=[
+        base_path + "GoPro-data-extraction/Output/1,1_0_0_10/Images",
+        base_path + "Bag-conversion/Output/1,1_0_0_10.bag",
+        base_path + "GoPro-data-extraction/Output/1,1_0_0_10/Metadata",
+        "euroc_stereo",
+        T_START,
+        T_END,
+    ])
 
 print("Conversion complete")
 

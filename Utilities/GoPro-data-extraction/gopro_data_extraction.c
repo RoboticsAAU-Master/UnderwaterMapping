@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdint.h>
+#include <sys/stat.h>
 
 #include "gpmf-parser/GPMF_parser.h"
 #include "gpmf-parser/demo/GPMF_mp4reader.h"
@@ -74,6 +75,23 @@ GPMF_ERR readMP4File(char *filename, char *output_folder)
 	metadatalength = GetDuration(mp4handle);
 	if (metadatalength > 0.0)
 	{
+		const char *folder_path = output_folder;
+		struct stat st;
+
+		// Create output folder if it doesn't exist
+		if (stat(folder_path, &st) == -1)
+		{
+			// Directory doesn't exist, so create it
+			if (mkdir(folder_path, 0777) == 0)
+			{
+				printf("Directory created successfully.\n");
+			}
+			else
+			{
+				printf("Error creating directory.\n");
+			}
+		}
+
 		char *output_path;
 		output_path = malloc(128); // Make space for the new string (should check the return value ...)
 		if (output_path == NULL)
