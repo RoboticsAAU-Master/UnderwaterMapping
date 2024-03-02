@@ -1,8 +1,6 @@
 from syncstart import file_offset
-from datetime import datetime, timedelta
 import os
-import cv2
-from math import ceil
+import subprocess
 
 # Parameters (video2_input should be the video that is cut)
 video1_input = "1,1_0_0_10_left.MP4"  # Specify path with "/" or "\\" not "\"
@@ -18,6 +16,7 @@ def get_offset(video1, video2, output_file=None, overwrite=False):
         "show": False,
     }  # Seconds of videos to keep (20 is default)
 
+    
     file_ahead, offset = file_offset(**args)
 
     if video1.split("/")[-1] != file_ahead:  # Change sign of offset if video2 is ahead

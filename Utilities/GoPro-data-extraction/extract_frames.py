@@ -55,6 +55,6 @@ if __name__ == "__main__":
         T_START,
         T_END,
         gray=True,
-        frame_skip=2,  # [0, Number of frames]
+        frame_skip=1,  # [0, Number of frames]
         downscale=0.5,  # [0, 1]
     )

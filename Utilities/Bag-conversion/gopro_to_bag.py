@@ -13,7 +13,7 @@ from PIL import ImageFile
 
 import cv2
 
-CAM_SAMPLE_RATE = 60.0  # Hz
+CAM_SAMPLE_RATE = 30.0  # Hz
 IMU_SAMPLE_RATE = 200.0  # Hz
 TIME_START = 26.99
 TIME_END = 144.0
