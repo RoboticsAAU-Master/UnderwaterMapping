@@ -13,7 +13,7 @@ def determine_onset(accl_file):
     
     axis_data = accl.iloc[:, 0].to_numpy()
     
-    data = np.abs(axis_data[:len(axis_data)//2])
+    data = np.abs(np.gradient(axis_data[:len(axis_data)//2]))
     
     # Get the maximum index and value of the absolute gradient
     max_index = np.argmax(data)
