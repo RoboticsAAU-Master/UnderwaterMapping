@@ -1,6 +1,6 @@
 #!/usr/bin/bash
 
-cd $1/GoPro-data-extration
+cd $1/GoPro-data-extraction
 
 make accl
 ./gopro_data_extractor $2 $3
