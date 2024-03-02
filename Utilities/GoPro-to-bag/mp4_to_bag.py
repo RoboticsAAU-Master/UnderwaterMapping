@@ -10,6 +10,10 @@ from extract_frames import save_all_frames
 from gopro_to_bag import CreateBag
 from view_bag import show_topics
 
+BASE_PATH = "/RUD-PT/rudpt_ws/src/UnderwaterMapping/Utilities",
+VIDEOS_FOLDER = "/RUD-PT/rudpt_ws/src/UnderwaterMapping/Utilities/GoPro-to-bag/videos",
+OUTPUT_FOLDER = "/RUD-PT/rudpt_ws/src/UnderwaterMapping/Utilities/GoPro-to-bag",
+
 
 def mp4_to_bag(base_path, videos_folder, output_folder):
     # Mp4 files to convert
@@ -84,8 +88,5 @@ def mp4_to_bag(base_path, videos_folder, output_folder):
 
 
 if __name__ == "__main__":
-    mp4_to_bag(run_args["base_path"], run_args["videos_folder"], run_args["output_folder"])
+    mp4_to_bag(base_path=BASE_PATH, videos_folder=VIDEOS_FOLDER, output_folder=OUTPUT_FOLDER)
     
-    # mp4_to_bag("/RUD-PT/rudpt_ws/src/UnderwaterMapping/Utilities",
-    #            "/RUD-PT/rudpt_ws/src/UnderwaterMapping/Utilities/GoPro-to-bag/videos",
-    #            "/RUD-PT/rudpt_ws/src/UnderwaterMapping/Utilities/GoPro-to-bag")
