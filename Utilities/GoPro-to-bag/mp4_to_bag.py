@@ -4,7 +4,6 @@ import glob
 import ntpath
 import subprocess
 
-from run_args import run_args
 from sync_audio import get_offset
 from extract_frames import save_all_frames
 from gopro_to_bag import CreateBag
