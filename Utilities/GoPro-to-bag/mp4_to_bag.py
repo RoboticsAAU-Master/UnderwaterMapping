@@ -50,7 +50,7 @@ def mp4_to_bag(base_path, videos_folder, output_folder):
         
         ### Extracting the metadata from the videos ###
         output_folder_metadata = base_path + "/GoPro-data-extraction/Output/" + video_left_base[:7] + "/Metadata"
-        subprocess.run([base_path + "/GoPro-to-bag/extract_metadata.sh", video_left, output_folder_metadata])
+        subprocess.run([base_path + "/GoPro-to-bag/extract_metadata.sh", base_path, video_left, output_folder_metadata])
 
         from determine_onset import determine_onset
         try :
