@@ -97,7 +97,7 @@ def mp4_to_bag(base_path, videos_folder, output_folder):
 
     # Convert and write JSON object to file with new times
     with open(new_times_path, "w") as outfile: 
-        json.dump(new_times, outfile)
+        json.dump(new_times, outfile, indent=4)
 
 
 def log_print(*args, log_file, sep=' ', end='\n'):
