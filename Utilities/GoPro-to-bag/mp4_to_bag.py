@@ -3,7 +3,7 @@ import json
 import glob
 import ntpath
 import subprocess
-import datetime
+from datetime import datetime
 
 from sync_audio import get_offset
 from extract_frames import save_all_frames
