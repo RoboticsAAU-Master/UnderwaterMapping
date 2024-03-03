@@ -1,1 +1,1 @@
-1,1_0_0_10_left.MP4 is started -0.0468125 [s] before the other.
+2,2_2_0_1_left.MP4 is started -0.5542083333333333 [s] before the other.
