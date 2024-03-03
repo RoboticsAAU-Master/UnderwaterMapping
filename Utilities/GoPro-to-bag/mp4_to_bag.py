@@ -3,6 +3,7 @@ import json
 import glob
 import ntpath
 import subprocess
+import datetime
 
 from sync_audio import get_offset
 from extract_frames import save_all_frames
@@ -18,11 +19,15 @@ OUTPUT_FOLDER = "/RUD-PT/rudpt_ws/src/UnderwaterMapping/Utilities/GoPro-to-bag/b
 
 def mp4_to_bag(base_path, videos_folder, output_folder):
     # Mp4 files to convert
-    videos_left = [file for file in glob.glob(videos_folder + "/left/*")]
-    videos_right = [file for file in glob.glob(videos_folder + "/right/*")]
+    videos_left = sorted([file for file in glob.glob(videos_folder + "/left/*")])
+    videos_right = sorted([file for file in glob.glob(videos_folder + "/right/*")])
     
     # Opening JSON file
-    with open(base_path + '/GoPro-to-bag/times.json') as json_file:
+    times_path = base_path + '/GoPro-to-bag/times.json'
+    new_times_path = base_path + '/GoPro-to-bag/new_times.json'
+    if os.path.isfile(new_times_path):
+        times_path = new_times_path
+    with open(times_path) as json_file:
         times = json.load(json_file)
         new_times = times.copy()
     
@@ -90,20 +95,23 @@ def mp4_to_bag(base_path, videos_folder, output_folder):
 
     log_print(f"Conversion complete. Processed {processed} videos", log_file=log_file)
 
-
     # Convert and write JSON object to file with new times
-    with open(base_path + "/GoPro-to-bag/new_times.json", "w") as outfile: 
+    with open(new_times_path, "w") as outfile: 
         json.dump(new_times, outfile)
 
 
 def log_print(*args, log_file, sep=' ', end='\n'):
+    # Get the current time
+    current_time = datetime.now().strftime("[%Y-%m-%d %H:%M:%S]")
+    
     # Open the log file in append mode if it exists, or create it if it doesn't
     with open(log_file, 'a') as f:
         # Print to console
-        print(*args, sep=sep, end=end, file=f)
+        print(*args, sep=sep, end=end)
         
         # Print to log file
-        print(*args, sep=sep, end=end)
+        print(current_time, *args, sep=sep, end=end, file=f)
+
 
 if __name__ == "__main__":
     mp4_to_bag(base_path=BASE_PATH, videos_folder=VIDEOS_FOLDER, output_folder=OUTPUT_FOLDER)
