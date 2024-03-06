@@ -19,6 +19,7 @@ def determine_onset(accl_file):
     start_index = int(IMU_SAMPLE_RATE * 20)
     data = data[start_index:]
     
+    # Determine the peaks
     peak_idxs = signal.argrelextrema(data, np.greater, order=50)[0]
     sorted_peak_idxs = sorted(peak_idxs, key=lambda x: data[x], reverse=True) 
     

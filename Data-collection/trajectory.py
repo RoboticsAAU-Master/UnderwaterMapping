@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import time
 import transforms3d as t3d
 from enum import Enum
-
+import scipy.signal as signal
 
 class OrientationType(Enum):
     EULER = 0
@@ -222,20 +222,28 @@ class Trajectory3D:
         t = self.timestamps_seconds.copy()
 
         # Compute the absolute gradient of the x position
-        abs_grad_x = np.abs(np.gradient(np.gradient(x)))
+        abs_acc_x = np.abs(np.gradient(np.gradient(x)))
 
-        # Get the maximum index and value of the absolute gradient
-        max_index = np.argmax(abs_grad_x)
-        max_val = abs_grad_x[max_index]
+        # Determine the peaks
+        peak_idxs = signal.argrelextrema(abs_acc_x, np.greater, order=15)[0]
+        sorted_peak_idxs = sorted(peak_idxs, key=lambda x: abs_acc_x[x], reverse=True) 
+        
+        # Raise error if the trajectory is not stationary at the beginning
+        stationary = True
+        for peak_idx in sorted_peak_idxs[:min(3, len(sorted_peak_idxs))]:
+            # Check if the trajectory is stationary at the beginning
+            prev_window = abs_acc_x[max(0, peak_idx - int(50)) : peak_idx + 1]
+            threshold = 0.01
+            if np.median(prev_window) < threshold:
+                max_idx = peak_idx
+                stationary = False
+                break
 
-        # Check if the trajectory is stationary at the beginning
-        prev_window = abs_grad_x[max(0, max_index - 30) : max_index + 1]
-        threshold = 0.1 * max_val
-        if np.median(prev_window) > threshold:
+        if stationary:
             raise ValueError("The trajectory is not stationary at the beginning")
 
-        # Set start index the maximum
-        start_time = self.timestamps_seconds[max_index]
+        # Set start index as the maximum
+        start_time = self.timestamps_seconds[max_idx]
         # start_time = 1.92  # For 2,1_0_0_10
 
         print("Start time: " + str(start_time) + " seconds")
