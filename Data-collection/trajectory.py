@@ -6,11 +6,47 @@ import transforms3d as t3d
 from enum import Enum
 import scipy.signal as signal
 
+
+# Define transformations
+alpha = 3.0 * np.pi / 180
+T_SCTRL_ACTRL = np.array(
+    [
+        [1.00, 0.00, 0.00, 0.00],
+        [0.00, np.cos(alpha), np.sin(alpha), 0.00],
+        [0.00, -np.sin(alpha), np.cos(alpha), -0.0023],
+        [0, 0, 0, 1],
+    ],
+)
+T_AQRM_SCTRL = np.array(
+    [
+        [1.00, 0.00, 0.00, 0.0805],
+        [0.00, 0.00, -1.00, 0.0539],
+        [0.00, 1.00, 0.00, 1.117],
+        [0, 0, 0, 1],
+    ],
+)
+T_SCTRL_LIMU = np.array(
+    [
+        [-0.67, 0.00, -0.74, -0.0314],
+        [-0.74, 0.00, 0.67, -0.9710],
+        [0.00, 1.00, 0.00, -0.1004],
+        [0, 0, 0, 1],
+    ],
+)
+T_SCTRL_RIMU = np.array(
+    [
+        [-0.67, 0.00, -0.74, -0.0314],
+        [-0.74, 0.00, 0.67, -0.9710],
+        [0.00, 1.00, 0.00, -0.0054],
+        [0, 0, 0, 1],
+    ],
+)
+
+
 class OrientationType(Enum):
     EULER = 0
     ROTATION_MATRIX = 1
     QUATERNION = 2
-
 
 class OrientationConversion:
     # All axes are in the order of x, y, z
@@ -614,6 +650,50 @@ def show_gt_error(
         plt.savefig("Ground_truth_error_fixed", dpi=300)
     plt.show()
 
+def process_gt(input_csv, output_txt, times_dict):
+    # Create a trajectory object
+    trajectory = Trajectory3D(orientation_type=OrientationType.EULER)
+
+    # Load the trajectory data
+    trajectory.load_csv(
+        csv_file=input_csv,
+        delimiter=";",
+        drop_columns=["Email", "Framecount"],
+        pose_columns=[
+            "RightControllerPosWorldX",
+            "RightControllerPosWorldY",
+            "RightControllerPosWorldZ",
+            "RightControllerRotEulerX",
+            "RightControllerRotEulerY",
+            "RightControllerRotEulerZ",
+        ],
+        timestamp_column="Timestamp",
+    )
+
+    # Remove the initial offset from the trajectory
+    trajectory.convert_degree_to_rad()
+    trajectory.make_right_handed()
+    trajectory.remove_initial_transformation()
+    trajectory.synchronise_initial_time(plot=True)
+
+    # Crop the trajectory in time
+    trajectory.crop_time(times_dict["left_time"][0] - times_dict["left_onset"], 
+                         times_dict["left_time"][1] - times_dict["left_onset"], shift_time=True)
+
+    # Apply transformations
+    trajectory.apply_transformation(np.linalg.inv(T_SCTRL_ACTRL), right_hand=True)
+    trajectory.apply_transformation(T_SCTRL_LIMU, right_hand=True)
+
+    # Plot the trajectory
+    #trajectory.plot(simulate=False, update_time=1, orientation_axes=[1, 1, 1])
+
+    # Print the trajectory time
+    trajectory_time = trajectory._get_trajectory_time_seconds()
+    print("Trajectory time: " + str(trajectory_time) + " seconds")
+
+    # Output converted trajectory as txt file
+    trajectory.convert_orientation(new_orientation_type=OrientationType.QUATERNION)
+    trajectory.output_as_txt(output_txt)
 
 if __name__ == "__main__":
     # Create a trajectory object
@@ -647,49 +727,14 @@ if __name__ == "__main__":
     #     21.00, trajectory._get_trajectory_time_seconds(), shift_time=False
     # )
 
-    # Define transformations
-    alpha = 3.0 * np.pi / 180
-    T_sctrl_actrl = np.array(
-        [
-            [1.00, 0.00, 0.00, 0.00],
-            [0.00, np.cos(alpha), np.sin(alpha), 0.00],
-            [0.00, -np.sin(alpha), np.cos(alpha), -0.0023],
-            [0, 0, 0, 1],
-        ],
-    )
-    T_aqrm_sctrl = np.array(
-        [
-            [1.00, 0.00, 0.00, 0.0805],
-            [0.00, 0.00, -1.00, 0.0539],
-            [0.00, 1.00, 0.00, 1.117],
-            [0, 0, 0, 1],
-        ],
-    )
-    T_sctrl_limu = np.array(
-        [
-            [-0.67, 0.00, -0.74, -0.0314],
-            [-0.74, 0.00, 0.67, -0.9710],
-            [0.00, 1.00, 0.00, -0.1004],
-            [0, 0, 0, 1],
-        ],
-    )
-    T_sctrl_rimu = np.array(
-        [
-            [-0.67, 0.00, -0.74, -0.0314],
-            [-0.74, 0.00, 0.67, -0.9710],
-            [0.00, 1.00, 0.00, -0.0054],
-            [0, 0, 0, 1],
-        ],
-    )
-
     # Plot the ground truth error
     show_gt_error(
-        trajectory, T_aqrm_sctrl, T_sctrl_actrl, T_sctrl_limu, T_sctrl_rimu, save=False
+        trajectory, T_AQRM_SCTRL, T_SCTRL_ACTRL, T_SCTRL_LIMU, T_SCTRL_RIMU, save=False
     )
 
     # Apply transformations
-    trajectory.apply_transformation(np.linalg.inv(T_sctrl_actrl), right_hand=True)
-    trajectory.apply_transformation(T_sctrl_limu, right_hand=True)
+    trajectory.apply_transformation(np.linalg.inv(T_SCTRL_ACTRL), right_hand=True)
+    trajectory.apply_transformation(T_SCTRL_LIMU, right_hand=True)
 
     # Plot the trajectory
     trajectory.plot(simulate=False, update_time=1, orientation_axes=[1, 1, 1])
