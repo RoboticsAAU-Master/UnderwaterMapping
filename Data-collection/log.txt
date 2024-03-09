@@ -1,0 +1,62 @@
+[2024-03-09 21:14:34] Skipping 1,1_0_0 as txt file already exists
+[2024-03-09 21:14:34] Skipping 1,1_0_1 as txt file already exists
+[2024-03-09 21:14:34] Skipping 1,1_0_2 as txt file already exists
+[2024-03-09 21:14:34] Skipping 1,1_0_3 as txt file already exists
+[2024-03-09 21:14:34] Skipping 1,1_1_0 as txt file already exists
+[2024-03-09 21:14:34] Skipping 1,1_1_1 as txt file already exists
+[2024-03-09 21:14:34] Skipping 1,1_1_2 as txt file already exists
+[2024-03-09 21:14:34] Skipping 1,1_1_3 as txt file already exists
+[2024-03-09 21:14:34] Skipping 1,1_2_0 as txt file already exists
+[2024-03-09 21:14:34] Skipping 1,1_2_1 as txt file already exists
+[2024-03-09 21:14:34] Skipping 1,1_2_2 as txt file already exists
+[2024-03-09 21:14:34] Skipping 1,1_2_3 as txt file already exists
+[2024-03-09 21:14:34] Skipping 1,2_0_0 as txt file already exists
+[2024-03-09 21:14:34] Skipping 1,2_0_1 as txt file already exists
+[2024-03-09 21:14:34] Skipping 1,2_0_2 as txt file already exists
+[2024-03-09 21:14:34] Skipping 1,2_0_3 as txt file already exists
+[2024-03-09 21:14:34] Skipping 1,2_1_0 as txt file already exists
+[2024-03-09 21:14:34] Skipping 1,2_1_1 as txt file already exists
+[2024-03-09 21:14:34] Skipping 1,2_1_2 as txt file already exists
+[2024-03-09 21:14:34] Skipping 1,2_1_3 as txt file already exists
+[2024-03-09 21:14:34] Skipping 1,2_2_0 as txt file already exists
+[2024-03-09 21:14:34] Skipping 1,2_2_1 as txt file already exists
+[2024-03-09 21:14:34] Skipping 1,2_2_2 as txt file already exists
+[2024-03-09 21:14:34] Skipping 1,2_2_3 as txt file already exists
+[2024-03-09 21:14:34] Skipping 1,3_0_0 as txt file already exists
+[2024-03-09 21:14:34] Skipping 1,3_0_1 as txt file already exists
+[2024-03-09 21:14:34] Skipping 1,3_0_2 as txt file already exists
+[2024-03-09 21:14:34] Skipping 1,3_0_3 as txt file already exists
+[2024-03-09 21:14:34] Skipping 1,3_1_0 as txt file already exists
+[2024-03-09 21:14:34] Skipping 1,3_1_1 as txt file already exists
+[2024-03-09 21:14:34] Skipping 1,3_1_2 as txt file already exists
+[2024-03-09 21:14:34] Skipping 1,3_1_3 as txt file already exists
+[2024-03-09 21:14:34] Skipping 1,3_2_0 as txt file already exists
+[2024-03-09 21:14:34] Skipping 1,3_2_1 as txt file already exists
+[2024-03-09 21:14:34] Skipping 1,3_2_2 as txt file already exists
+[2024-03-09 21:14:34] Skipping 1,3_2_3 as txt file already exists
+[2024-03-09 21:14:34] CONVERTING: 2,1_0_0_10.csv
+[2024-03-09 21:14:34] CONVERTING: 2,1_0_1_3.csv
+[2024-03-09 21:14:34] CONVERTING: 2,1_0_2_1.csv
+[2024-03-09 21:14:34] CONVERTING: 2,1_0_3_1.csv
+[2024-03-09 21:14:35] CONVERTING: 2,1_1_0_1.csv
+[2024-03-09 21:14:35] CONVERTING: 2,1_1_1_1.csv
+[2024-03-09 21:14:35] CONVERTING: 2,1_1_2_1.csv
+[2024-03-09 21:14:35] CONVERTING: 2,1_1_3_1.csv
+[2024-03-09 21:14:36] CONVERTING: 2,1_2_0_1.csv
+[2024-03-09 21:14:36] CONVERTING: 2,1_2_1_1.csv
+[2024-03-09 21:14:36] CONVERTING: 2,1_2_2_1.csv
+[2024-03-09 21:14:36] CONVERTING: 2,1_2_3_1.csv
+[2024-03-09 21:14:37] CONVERTING: 2,2_0_0_10.csv
+[2024-03-09 21:14:37] CONVERTING: 2,2_0_1_1.csv
+[2024-03-09 21:14:37] CONVERTING: 2,2_0_2_1.csv
+[2024-03-09 21:14:37] CONVERTING: 2,2_0_3_1.csv
+[2024-03-09 21:14:38] CONVERTING: 2,2_1_0_1.csv
+[2024-03-09 21:14:38] CONVERTING: 2,2_1_1_1.csv
+[2024-03-09 21:14:38] CONVERTING: 2,2_1_2_1.csv
+[2024-03-09 21:14:38] CONVERTING: 2,2_1_3_1.csv
+[2024-03-09 21:14:39] CONVERTING: 2,2_2_0_1.csv
+[2024-03-09 21:14:39] CONVERTING: 2,2_2_1_1.csv
+[2024-03-09 21:14:39] CONVERTING: 2,2_2_2_1.csv
+[2024-03-09 21:14:39] CONVERTING: 2,2_2_3_1.csv
+[2024-03-09 21:14:39] Conversion complete. Processed 24 videos
+[2024-03-09 21:14:39] --------------------------------

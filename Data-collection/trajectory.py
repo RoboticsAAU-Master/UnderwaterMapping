@@ -5,18 +5,9 @@ import time
 import transforms3d as t3d
 from enum import Enum
 import scipy.signal as signal
-
+import ntpath
 
 # Define transformations
-alpha = 3.0 * np.pi / 180
-T_SCTRL_ACTRL = np.array(
-    [
-        [1.00, 0.00, 0.00, 0.00],
-        [0.00, np.cos(alpha), np.sin(alpha), 0.00],
-        [0.00, -np.sin(alpha), np.cos(alpha), -0.0023],
-        [0, 0, 0, 1],
-    ],
-)
 T_AQRM_SCTRL = np.array(
     [
         [1.00, 0.00, 0.00, 0.0805],
@@ -25,10 +16,20 @@ T_AQRM_SCTRL = np.array(
         [0, 0, 0, 1],
     ],
 )
+alpha_vive = 3.3 * np.pi / 180
+T_SCTRL_ACTRL = np.array(
+    [
+        [1.00, 0.00, 0.00, 0.00],
+        [0.00, np.cos(alpha_vive), np.sin(alpha_vive), -0.0014],
+        [0.00, -np.sin(alpha_vive), np.cos(alpha_vive), -0.0040],
+        [0, 0, 0, 1],
+    ],
+)
+alpha_cam = 47.5 * np.pi / 180
 T_SCTRL_LIMU = np.array(
     [
-        [-0.67, 0.00, -0.74, -0.0314],
-        [-0.74, 0.00, 0.67, -0.9710],
+        [-np.cos(alpha_cam), 0.00, -np.sin(alpha_cam), -0.0314],
+        [-np.sin(alpha_cam), 0.00, np.cos(alpha_cam), -0.9710],
         [0.00, 1.00, 0.00, -0.1004],
         [0, 0, 0, 1],
     ],
@@ -207,6 +208,7 @@ class Trajectory3D:
 
         self.timestamps_seconds = []
         self.data_loader = None
+        self.name = ""
 
     def _copy(self):
         new_trajectory = Trajectory3D(self.orientation_type)
@@ -233,7 +235,8 @@ class Trajectory3D:
         self.data_loader.drop_columns(drop_columns)
         self.data_loader.drop_invalid_rows(pose_columns)
         self.data_loader.datetime_to_seconds(timestamp_column)
-
+        self.name = ntpath.basename(csv_file)
+        
         # Save the trajectory data
         self.position = self.data_loader.df[pose_columns[0:3]].to_numpy()
         self.orientation = self.data_loader.df[pose_columns[3:]].to_numpy()
@@ -276,11 +279,13 @@ class Trajectory3D:
                 break
 
         if stationary:
-            raise ValueError("The trajectory is not stationary at the beginning")
-
-        # Set start index as the maximum
-        start_time = self.timestamps_seconds[max_idx]
-        # start_time = 1.92  # For 2,1_0_0_10
+            if self.name[:7] == "2,1_0_0":
+                start_time = 1.92  # For 2,1_0_0_10
+            else:
+                raise ValueError("The trajectory is not stationary at the beginning")
+        else:
+            # Set start index as the maximum
+            start_time = self.timestamps_seconds[max_idx]
 
         print("Start time: " + str(start_time) + " seconds")
         start_index = np.argmax(self.timestamps_seconds >= start_time)
@@ -595,13 +600,13 @@ class Trajectory3D:
             plt.show()
 
 
-def show_gt_error(
+def show_gt_aquarium(
     trajectory: Trajectory3D,
     T_aqrm_sctrl,
     T_sctrl_actrl,
     T_sctrl_limu,
     T_sctrl_rimu,
-    save=False,
+    save_file=None,
 ):
     trajectory_ctrl = trajectory._copy()
 
@@ -646,11 +651,12 @@ def show_gt_error(
 
     ax.legend(loc="upper right")
 
-    if save:
-        plt.savefig("Ground_truth_error_fixed", dpi=300)
-    plt.show()
+    if save_file is not None:
+        plt.savefig(save_file, dpi=300)
+    else:
+        plt.show()
 
-def process_gt(input_csv, output_txt, times_dict):
+def process_gt(input_csv, output_txt, output_image, times_dict):
     # Create a trajectory object
     trajectory = Trajectory3D(orientation_type=OrientationType.EULER)
 
@@ -674,7 +680,7 @@ def process_gt(input_csv, output_txt, times_dict):
     trajectory.convert_degree_to_rad()
     trajectory.make_right_handed()
     trajectory.remove_initial_transformation()
-    trajectory.synchronise_initial_time(plot=True)
+    trajectory.synchronise_initial_time(plot=False)
 
     # Crop the trajectory in time
     trajectory.crop_time(times_dict["left_time"][0] - times_dict["left_onset"], 
@@ -690,6 +696,11 @@ def process_gt(input_csv, output_txt, times_dict):
     # Print the trajectory time
     trajectory_time = trajectory._get_trajectory_time_seconds()
     print("Trajectory time: " + str(trajectory_time) + " seconds")
+
+    # Save a file with the cropped trajectory in the aquarium frame
+    # show_gt_aquarium(
+    #     trajectory, T_AQRM_SCTRL, T_SCTRL_ACTRL, T_SCTRL_LIMU, T_SCTRL_RIMU, save=output_image
+    # )
 
     # Output converted trajectory as txt file
     trajectory.convert_orientation(new_orientation_type=OrientationType.QUATERNION)
@@ -728,8 +739,8 @@ if __name__ == "__main__":
     # )
 
     # Plot the ground truth error
-    show_gt_error(
-        trajectory, T_AQRM_SCTRL, T_SCTRL_ACTRL, T_SCTRL_LIMU, T_SCTRL_RIMU, save=False
+    show_gt_aquarium(
+        trajectory, T_AQRM_SCTRL, T_SCTRL_ACTRL, T_SCTRL_LIMU, T_SCTRL_RIMU, save=None
     )
 
     # Apply transformations

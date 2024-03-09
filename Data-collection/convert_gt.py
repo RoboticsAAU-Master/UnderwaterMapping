@@ -6,12 +6,12 @@ from datetime import datetime
 
 from trajectory import process_gt
 
-# BASE_PATH = "/storage/extraction/UnderwaterMapping/Data-collection"
-# IN_GT_FOLDER = "/storage/extraction/UnderwaterMapping/Data-collection/csv_data"
-# OUT_GT_FOLDER = "/storage/data/gt"
-BASE_PATH = "/RUD-PT/rudpt_ws/src/UnderwaterMapping/Data-collection"
-IN_GT_FOLDER = "/RUD-PT/rudpt_ws/src/UnderwaterMapping/Data-collection/csv_data"
-OUT_GT_FOLDER = "/RUD-PT/rudpt_ws/src/UnderwaterMapping/Data-collection/txt_data"
+BASE_PATH = "/storage/extraction/UnderwaterMapping/Data-collection"
+IN_GT_FOLDER = "/storage/data/gt/raw"
+OUT_GT_FOLDER = "/storage/data/gt/processed"
+# BASE_PATH = "/RUD-PT/rudpt_ws/src/UnderwaterMapping/Data-collection"
+# IN_GT_FOLDER = "/RUD-PT/rudpt_ws/src/UnderwaterMapping/Data-collection/csv_data"
+# OUT_GT_FOLDER = "/RUD-PT/rudpt_ws/src/UnderwaterMapping/Data-collection/txt_data"
 
 def convert_gt(base_path, in_gt_folder, out_gt_folder):
     # GT files to convert
@@ -30,18 +30,23 @@ def convert_gt(base_path, in_gt_folder, out_gt_folder):
         ### Prechecks to ensure correct video pair ###
         in_gt_base = ntpath.basename(in_gt_file)
         
-        output_file = out_gt_folder + "/" + in_gt_base[:7] + ".txt"
-        if os.path.isfile(output_file):
+        output_txt_file = out_gt_folder + "/txt/" + in_gt_base[:7] + ".txt"
+        if os.path.isfile(output_txt_file):
             log_print("Skipping", in_gt_base[:7], "as txt file already exists", log_file=log_file)
             continue
         
         log_print("CONVERTING:", in_gt_base, log_file=log_file)
         
-        process_gt(in_gt_file, output_file, times)
+        output_image_file = out_gt_folder + "/images/" + in_gt_base[:7] + ".png"
+        try :
+            process_gt(in_gt_file, output_txt_file, output_image_file, times[in_gt_base[:7]])
+        except ValueError as e:
+            log_print(e, "for", in_gt_file[:7], log_file=log_file)
         
         processed += 1
     
     log_print(f"Conversion complete. Processed {processed} videos", log_file=log_file)
+    log_print("--------------------------------", log_file=log_file)
 
     
 def log_print(*args, log_file, sep=' ', end='\n'):
