@@ -6,9 +6,12 @@ from datetime import datetime
 
 from trajectory import process_gt
 
-BASE_PATH = "/storage/extraction/UnderwaterMapping/Data-collection"
-IN_GT_FOLDER = "/storage/data/gt/raw"
-OUT_GT_FOLDER = "/storage/data/gt/processed"
+# BASE_PATH = "/storage/extraction/UnderwaterMapping/Data-collection"
+# IN_GT_FOLDER = "/storage/data/gt/raw"
+# OUT_GT_FOLDER = "/storage/data/gt/processed"
+BASE_PATH = "/mnt/sdb1/RUDPT/extraction/UnderwaterMapping/Data-collection"
+IN_GT_FOLDER = "/mnt/sdb1/RUDPT/data/gt/raw"
+OUT_GT_FOLDER = "/mnt/sdb1/RUDPT/data/gt/processed"
 # BASE_PATH = "/RUD-PT/rudpt_ws/src/UnderwaterMapping/Data-collection"
 # IN_GT_FOLDER = "/RUD-PT/rudpt_ws/src/UnderwaterMapping/Data-collection/csv_data"
 # OUT_GT_FOLDER = "/RUD-PT/rudpt_ws/src/UnderwaterMapping/Data-collection/txt_data"
@@ -31,9 +34,9 @@ def convert_gt(base_path, in_gt_folder, out_gt_folder):
         in_gt_base = ntpath.basename(in_gt_file)
         
         output_txt_file = out_gt_folder + "/txt/" + in_gt_base[:7] + ".txt"
-        if os.path.isfile(output_txt_file):
-            log_print("Skipping", in_gt_base[:7], "as txt file already exists", log_file=log_file)
-            continue
+        # if os.path.isfile(output_txt_file):
+        #     log_print("Skipping", in_gt_base[:7], "as txt file already exists", log_file=log_file)
+        #     continue
         
         log_print("CONVERTING:", in_gt_base, log_file=log_file)
         

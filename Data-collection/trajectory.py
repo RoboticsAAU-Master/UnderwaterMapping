@@ -261,24 +261,23 @@ class Trajectory3D:
         t = self.timestamps_seconds.copy()
 
         # Compute the absolute gradient of the x position
-        abs_acc_x = np.abs(np.gradient(np.gradient(x)))
+        abs_acc_x = np.abs(np.gradient(np.gradient(x[:len(x)//2])))
 
         # Determine the peaks
         peak_idxs = signal.argrelextrema(abs_acc_x, np.greater, order=15)[0]
         sorted_peak_idxs = sorted(peak_idxs, key=lambda x: abs_acc_x[x], reverse=True) 
         
-        # Raise error if the trajectory is not stationary at the beginning
-        stationary = True
+        # Check if the trajectory is stationary at the beginning
+        stationary = False
         for peak_idx in sorted_peak_idxs[:min(3, len(sorted_peak_idxs))]:
-            # Check if the trajectory is stationary at the beginning
             prev_window = abs_acc_x[max(0, peak_idx - int(50)) : peak_idx + 1]
             threshold = 0.01
             if np.median(prev_window) < threshold:
                 max_idx = peak_idx
-                stationary = False
+                stationary = True
                 break
 
-        if stationary:
+        if not stationary:
             if self.name[:7] == "2,1_0_0":
                 start_time = 1.92  # For 2,1_0_0_10
             else:
@@ -455,6 +454,7 @@ class Trajectory3D:
 
         if start_time < 0:
             start_time = 0
+            raise ValueError("The start time cannot be less than 0")
 
         if end_time > self.timestamps_seconds[-1]:
             end_time = self.timestamps_seconds[-1]
@@ -611,6 +611,7 @@ def show_gt_aquarium(
     trajectory_ctrl = trajectory._copy()
 
     # Create a figure and axis
+    plt.ion()
     fig, ax = plt.subplots()
 
     # The transformation is calculated as follows ([] denotes the starting transformation and ' denotes a static frame):
@@ -653,8 +654,9 @@ def show_gt_aquarium(
 
     if save_file is not None:
         plt.savefig(save_file, dpi=300)
-    else:
         plt.show()
+        plt.close()
+    
 
 def process_gt(input_csv, output_txt, output_image, times_dict):
     # Create a trajectory object
@@ -698,9 +700,9 @@ def process_gt(input_csv, output_txt, output_image, times_dict):
     print("Trajectory time: " + str(trajectory_time) + " seconds")
 
     # Save a file with the cropped trajectory in the aquarium frame
-    # show_gt_aquarium(
-    #     trajectory, T_AQRM_SCTRL, T_SCTRL_ACTRL, T_SCTRL_LIMU, T_SCTRL_RIMU, save=output_image
-    # )
+    show_gt_aquarium(
+        trajectory, T_AQRM_SCTRL, T_SCTRL_ACTRL, T_SCTRL_LIMU, T_SCTRL_RIMU, save_file=output_image
+    )
 
     # Output converted trajectory as txt file
     trajectory.convert_orientation(new_orientation_type=OrientationType.QUATERNION)
