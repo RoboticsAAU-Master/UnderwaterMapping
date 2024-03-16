@@ -25,8 +25,8 @@ cameras:
     rows: 4
     data: [ 0., 1., 0., 0.,
             1.,  0., 0., 0.,
-             0.,  0., -1., 0.,
-             0., 0., 0., 1.] 
+            0.,  0., -1., 0.,
+            0., 0., 0., 1.] 
 
 
     # [0.00893882615463667, 0.9998818394092135, -0.012506182735929808, 0.003367236070342833,
@@ -55,7 +55,6 @@ cameras:
     #         0,    0,    0,    1]
 
 imu_params:
-  # delay_imu_cam: -0.1
   delay_imu_cam: 0
   #delay_imu_cam: 0.05389058151757878
   max_imu_delta_t: 0.01
@@ -66,7 +65,7 @@ imu_params:
   sigma_omega_bias_c: 0.00043257797
   sigma_acc_bias_c: 0.00190928453
   sigma_integration: 0.0
-  g: 9.88
+  g: 9.82
   imu_rate: 200
 
 imu_initialization:

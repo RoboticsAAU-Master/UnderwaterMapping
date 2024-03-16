@@ -9,12 +9,12 @@ from trajectory import process_gt
 # BASE_PATH = "/storage/extraction/UnderwaterMapping/Data-collection"
 # IN_GT_FOLDER = "/storage/data/gt/raw"
 # OUT_GT_FOLDER = "/storage/data/gt/processed"
-BASE_PATH = "/mnt/sdb1/RUDPT/extraction/UnderwaterMapping/Data-collection"
-IN_GT_FOLDER = "/mnt/sdb1/RUDPT/data/gt/raw"
-OUT_GT_FOLDER = "/mnt/sdb1/RUDPT/data/gt/processed"
-# BASE_PATH = "/RUD-PT/rudpt_ws/src/UnderwaterMapping/Data-collection"
-# IN_GT_FOLDER = "/RUD-PT/rudpt_ws/src/UnderwaterMapping/Data-collection/csv_data"
-# OUT_GT_FOLDER = "/RUD-PT/rudpt_ws/src/UnderwaterMapping/Data-collection/txt_data"
+# BASE_PATH = "/mnt/sdb1/RUDPT/extraction/UnderwaterMapping/Data-collection"
+# IN_GT_FOLDER = "/mnt/sdb1/RUDPT/data/gt/raw"
+# OUT_GT_FOLDER = "/mnt/sdb1/RUDPT/data/gt/processed"
+BASE_PATH = "/RUD-PT/rudpt_ws/src/UnderwaterMapping/Data-collection"
+IN_GT_FOLDER = "/RUD-PT/rudpt_ws/src/UnderwaterMapping/Data-collection/csv_data/RUD-PT"
+OUT_GT_FOLDER = "/RUD-PT/rudpt_ws/src/UnderwaterMapping/Data-collection/processed"
 
 def convert_gt(base_path, in_gt_folder, out_gt_folder):
     # GT files to convert

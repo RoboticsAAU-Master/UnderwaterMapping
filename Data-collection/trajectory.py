@@ -16,6 +16,16 @@ T_AQRM_SCTRL = np.array(
         [0, 0, 0, 1],
     ],
 )
+alpha_aqrm = -3.0 * np.pi / 180
+T_AQRM_CTRL = np.array(
+    [
+        [np.cos(alpha_aqrm), -np.sin(alpha_aqrm), 0.00, 0.00],
+        [np.sin(alpha_aqrm), np.cos(alpha_aqrm), 0.00, -0.03],
+        [0.00, 0.00, 1.00, 0.00],
+        [0, 0, 0, 1],
+    ]
+) @ T_AQRM_SCTRL
+
 alpha_vive = 3.3 * np.pi / 180
 T_SCTRL_ACTRL = np.array(
     [
@@ -261,30 +271,40 @@ class Trajectory3D:
         t = self.timestamps_seconds.copy()
 
         # Compute the absolute gradient of the x position
-        abs_acc_x = np.abs(np.gradient(np.gradient(x[:len(x)//2])))
-
-        # Determine the peaks
-        peak_idxs = signal.argrelextrema(abs_acc_x, np.greater, order=15)[0]
-        sorted_peak_idxs = sorted(peak_idxs, key=lambda x: abs_acc_x[x], reverse=True) 
+        acc_x = -(np.gradient(np.gradient(x[:len(x)//2])))
+        # plt.plot(acc_x)
+        # plt.show()
+        # plt.plot(self.timestamps_seconds[:len(acc_x)], acc_x)
+        # plt.show()
         
-        # Check if the trajectory is stationary at the beginning
-        stationary = False
-        for peak_idx in sorted_peak_idxs[:min(3, len(sorted_peak_idxs))]:
-            prev_window = abs_acc_x[max(0, peak_idx - int(50)) : peak_idx + 1]
-            threshold = 0.01
-            if np.median(prev_window) < threshold:
-                max_idx = peak_idx
-                stationary = True
-                break
+        start_time = self.timestamps_seconds[np.argmax(acc_x >= 0.002)]
+        if self.name[:7] == "1,1_1_0":
+            start_time = 3.71
+        if self.name[:7] == "2,1_0_0":
+            start_time = 1.92
+        
+        # # Determine the peaks
+        # peak_idxs = signal.argrelextrema(abs_acc_x, np.greater, order=20)[0]
+        # sorted_peak_idxs = sorted(peak_idxs, key=lambda x: abs_acc_x[x], reverse=True) 
+        
+        # # Check if the trajectory is stationary at the beginning
+        # stationary = False
+        # for peak_idx in sorted_peak_idxs[:min(3, len(sorted_peak_idxs))]:
+        #     prev_window = abs_acc_x[max(0, peak_idx - int(30)) : peak_idx + 1]
+        #     threshold = 0.005
+        #     if np.median(prev_window) < threshold:
+        #         max_idx = peak_idx
+        #         stationary = True
+        #         break
 
-        if not stationary:
-            if self.name[:7] == "2,1_0_0":
-                start_time = 1.92  # For 2,1_0_0_10
-            else:
-                raise ValueError("The trajectory is not stationary at the beginning")
-        else:
-            # Set start index as the maximum
-            start_time = self.timestamps_seconds[max_idx]
+        # if not stationary:
+        #     if self.name[:7] == "2,1_0_0":
+        #         start_time = 1.92  # For 2,1_0_0_10
+        #     else:
+        #         raise ValueError("The trajectory is not stationary at the beginning")
+        # else:
+        #     # Set start index as the maximum
+        #     start_time = self.timestamps_seconds[max_idx]
 
         print("Start time: " + str(start_time) + " seconds")
         start_index = np.argmax(self.timestamps_seconds >= start_time)
@@ -611,7 +631,6 @@ def show_gt_aquarium(
     trajectory_ctrl = trajectory._copy()
 
     # Create a figure and axis
-    plt.ion()
     fig, ax = plt.subplots()
 
     # The transformation is calculated as follows ([] denotes the starting transformation and ' denotes a static frame):
@@ -643,8 +662,8 @@ def show_gt_aquarium(
     ax.spines["top"].set_bounds(0, 0.8)
     ax.spines["right"].set_bounds(0, 0.4)
 
-    ax.set_xlim(0, 0.9)
-    ax.set_ylim(0, 0.5)
+    ax.set_xlim(0.0, 0.9)
+    ax.set_ylim(0.0, 0.5)
     ax.set_aspect("equal")
 
     ax.set_xlabel("X [m]")
@@ -654,8 +673,9 @@ def show_gt_aquarium(
 
     if save_file is not None:
         plt.savefig(save_file, dpi=300)
-        plt.show()
         plt.close()
+    
+    plt.show()
     
 
 def process_gt(input_csv, output_txt, output_image, times_dict):
@@ -682,15 +702,21 @@ def process_gt(input_csv, output_txt, output_image, times_dict):
     trajectory.convert_degree_to_rad()
     trajectory.make_right_handed()
     trajectory.remove_initial_transformation()
-    trajectory.synchronise_initial_time(plot=False)
+    trajectory.synchronise_initial_time(plot=True)
 
     # Crop the trajectory in time
     trajectory.crop_time(times_dict["left_time"][0] - times_dict["left_onset"], 
                          times_dict["left_time"][1] - times_dict["left_onset"], shift_time=True)
 
+    # Save a file with the cropped trajectory in the aquarium frame
+    show_gt_aquarium(
+        trajectory, T_AQRM_SCTRL, T_SCTRL_ACTRL, T_SCTRL_LIMU, T_SCTRL_RIMU, save_file=output_image
+    )
+    
     # Apply transformations
     trajectory.apply_transformation(np.linalg.inv(T_SCTRL_ACTRL), right_hand=True)
     trajectory.apply_transformation(T_SCTRL_LIMU, right_hand=True)
+
 
     # Plot the trajectory
     #trajectory.plot(simulate=False, update_time=1, orientation_axes=[1, 1, 1])
@@ -699,14 +725,10 @@ def process_gt(input_csv, output_txt, output_image, times_dict):
     trajectory_time = trajectory._get_trajectory_time_seconds()
     print("Trajectory time: " + str(trajectory_time) + " seconds")
 
-    # Save a file with the cropped trajectory in the aquarium frame
-    show_gt_aquarium(
-        trajectory, T_AQRM_SCTRL, T_SCTRL_ACTRL, T_SCTRL_LIMU, T_SCTRL_RIMU, save_file=output_image
-    )
-
     # Output converted trajectory as txt file
     trajectory.convert_orientation(new_orientation_type=OrientationType.QUATERNION)
     trajectory.output_as_txt(output_txt)
+
 
 if __name__ == "__main__":
     # Create a trajectory object
@@ -714,7 +736,7 @@ if __name__ == "__main__":
 
     # Load the trajectory data
     trajectory.load_csv(
-        csv_file="Data-collection/csv_data/RUD-PT/2,1_2_2_1.csv",
+        csv_file="Data-collection/csv_data/RUD-PT/1,1_0_0_10.csv",
         delimiter=";",
         drop_columns=["Email", "Framecount"],
         pose_columns=[
@@ -742,7 +764,7 @@ if __name__ == "__main__":
 
     # Plot the ground truth error
     show_gt_aquarium(
-        trajectory, T_AQRM_SCTRL, T_SCTRL_ACTRL, T_SCTRL_LIMU, T_SCTRL_RIMU, save=None
+        trajectory, T_AQRM_SCTRL, T_SCTRL_ACTRL, T_SCTRL_LIMU, T_SCTRL_RIMU, save_file=None
     )
 
     # Apply transformations
@@ -750,7 +772,7 @@ if __name__ == "__main__":
     trajectory.apply_transformation(T_SCTRL_LIMU, right_hand=True)
 
     # Plot the trajectory
-    trajectory.plot(simulate=False, update_time=1, orientation_axes=[1, 1, 1])
+    #trajectory.plot(simulate=False, update_time=1, orientation_axes=[1, 1, 1])
 
     # Print the trajectory time
     trajectory_time = trajectory._get_trajectory_time_seconds()
